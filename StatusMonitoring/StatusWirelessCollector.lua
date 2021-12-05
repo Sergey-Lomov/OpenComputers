@@ -1,4 +1,4 @@
---Version 1.0
+--Status Collector (1.0)
 
 local statusSystemPort = 4361
 local sentByCollectorMark = "sent_by_status_collector"
