@@ -1,6 +1,7 @@
 serialization = require("serialization")
 term = require("term")
 computer = require("computer")
+event = require("event")
 
 utils = {
 	errorColor = 0xFF0000,
