@@ -1,0 +1,22 @@
+{
+	fans = {
+		[1] = {id = "00cbfb18-2add-4106-b744-22f59d4a3c03", side = 0},
+		[2] = {id = "00cbfb18-2add-4106-b744-22f59d4a3c03", side = 2},
+		[3] = {id = "00cbfb18-2add-4106-b744-22f59d4a3c03", side = 3}
+	},
+	heaters = {
+		[1] = {id = "9bc7e707-dc4d-400d-abfc-c83c5e7971aa", side = 0},
+		[2] = {id = "f0176844-f2f5-4629-8094-ee0bf11cb0d1", side = 2},
+		[3] = {id = "9bc7e707-dc4d-400d-abfc-c83c5e7971aa", side = 5}
+	},
+	lavas = {
+		[1] = {id = "a8d34842-5e49-41fa-87cb-42381ef7d4f3", side = 1},
+		[2] = {id = "f343dbc8-29aa-495b-b052-2d6adc7e1e1d", side = 1},
+		[3] = {id = "619d3301-ec67-42b7-bc6d-57e453a7806d", side = 1},
+		[4] = {id = "536a5367-737e-481c-9f2e-c7c10205f3f9", side = 1}
+	},
+	aquas = {},
+	drenage = {id = "f0176844-f2f5-4629-8094-ee0bf11cb0d1", side = 0},
+	temp = 62,
+	humid = 90
+}

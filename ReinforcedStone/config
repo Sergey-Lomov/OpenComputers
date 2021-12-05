@@ -1,0 +1,7 @@
+{
+	inSide = 1,
+	outSide = 1,
+	toolsSignalSide = 0,
+	toolsOutDelay = 5,
+	iterationsLimit = 3
+}

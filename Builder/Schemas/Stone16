@@ -1,0 +1,28 @@
+{
+	emptyName = "none",
+	size = {x = 16, z = 16},
+	codes = {
+		[" "] = "none",
+		["S"] = "minecraft:stone",
+	},
+	layers = {
+		[1] = {
+			[1] = "SSSSSSSSSSSSSSSS",
+			[2] = "SSSSSSSSSSSSSSSS",
+			[3] = "SSSSSSSSSSSSSSSS",
+			[4] = "SSSSSSSSSSSSSSSS",
+			[5] = "SSSSSSSSSSSSSSSS",
+			[6] = "SSSSSSSSSSSSSSSS",
+			[7] = "SSSSSSSSSSSSSSSS",
+			[8] = "SSSSSSSSSSSSSSSS",
+			[9] = "SSSSSSSSSSSSSSSS",
+			[10] = "SSSSSSSSSSSSSSSS",
+			[11] = "SSSSSSSSSSSSSSSS",
+			[12] = "SSSSSSSSSSSSSSSS",
+			[13] = "SSSSSSSSSSSSSSSS",
+			[14] = "SSSSSSSSSSSSSSSS",
+			[15] = "SSSSSSSSSSSSSSSS",
+			[16] = "SSSSSSSSSSSSSSSS"
+		},
+	}
+}

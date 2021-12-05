@@ -1,0 +1,28 @@
+{
+	shorters = {
+		["nw"] = "netherWart",
+		["r"] = "reed",
+		["sr"] = "stickreed",
+		["rw"] = "redwheat",
+		["a"] = "aurelia",
+		["f"] = "ferru",
+		["st"] = "stagnium",
+		["pu"] = "pumpkin",
+		["bm"] = "brownMushroom",
+		["ro"] = "rose",
+		["w"] = "wheat",
+		["cya"] = "cyazint",
+		["ca"] = "carrots",
+		["po"] = "potato",
+		["h"] = "hops",
+		["c"] = "cyprium",
+		["p"] = "plumbiscus",
+		["tw"] = "terraWart",
+		["tu"] = "tulip",
+		["sh"] = "shining",
+		["bt"] = "blackthorn",
+		["coc"] = "cocoa",
+		["cof"] = "coffee"
+	},
+	observable = { "ferru", "cyprium", "plumbiscus" }
+}

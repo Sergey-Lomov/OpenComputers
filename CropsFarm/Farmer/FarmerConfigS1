@@ -1,0 +1,25 @@
+{
+	fieldCorner1 = {x = 0, y = 0, z = 0},
+	fieldCorner2 = {x = -43, y = 0, z = 12},
+	unloadPosition = {x = 0, y = 0, z = 0},
+	unloadSide = 3,
+	unloadFace = 0,
+	toRechargeRoute = {
+		[1] = {x = -2, y = 0, z = 0},
+		[2] = {x = -2, y = 0, z = -2},
+		[3] = {x = -2, y = 19, z = -2},
+		[4] = {x = 1, y = 19, z = -2},
+		[5] = {x = 1, y = 19, z = -8}
+	},
+	fromRechargeRoute = {
+		[1] = {x = 1, y = 18, z = -8},
+		[2] = {x = 1, y = 18, z = -2},
+		[3] = {x = -2, y = 18, z = -2},
+		[4] = {x = -2, y = 0, z = -2},
+		[5] = {x = -2, y = 0, z = 0}
+	},
+	rechargeRate = 0.15,
+	pingTitle = "Фермер Ю-1",
+	pingRange = 7,
+	pingAllowableDelay = 360
+}

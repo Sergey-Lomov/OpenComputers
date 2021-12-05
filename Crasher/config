@@ -1,0 +1,11 @@
+{
+	inSide = 1,
+	outSide = 0,
+	chargeLimit = 500,
+	chargeKey = "energy",
+	maxChargeKey = "maxEnergy",
+	pingTitle = "Дробитель",
+	pingRange = 25,
+	pingAllowableDelay = 60,
+	successMessage = "Дробитель завершил работу"
+}

@@ -1,0 +1,22 @@
+{
+	charger = {
+		position = {x = 6, y = 2, z = 6}, 
+		perchesFace = 0,
+		unloadingFace = 2,
+		prePosition = {x = 6, y = 2, z = 5},
+		postPosition = {x = 5, y = 2, z = 6}
+	},
+	area = {
+		[1] = {x = 4, y = 0, z = 3},
+		[2] = {x = 5, y = 0, z = 0},
+		[3] = {x = 4, y = 0, z = 1},
+		[4] = {x = 4, y = 0, z = 5},
+		[5] = {x = 3, y = 0, z = 4},
+		[6] = {x = 5, y = 0, z = 4}
+	},
+	cruiseHeight = 2,
+	workHeight = 0,
+	voiceUsers = "S_Spirit",
+	voicePrefix = "Ватсон",
+	pingTitle = "Разводчик (Watson)"
+}

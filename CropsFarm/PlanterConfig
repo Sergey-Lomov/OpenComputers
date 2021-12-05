@@ -1,0 +1,45 @@
+{
+	fieldCorner1 = {x = 0, y = 0, z = 0},
+	fieldCorner2 = {x = -43, y = 0, z = 12},
+	servicePosition = {x = -12, y = 0, z = 0},
+	serviceSide = 1,
+	serviceFace = 3,
+	toRechargeRoute = {
+		[1] = {x = -19, y = 0, z = 0}
+	},
+	fromRechargeRoute = {
+		[1] = {x = 0, y = 0, z = 0}
+	},
+	rechargeRate = 0.15,
+	hoeEnergyLimit = 3200,
+	hoeEnergyKey = "charge",
+	hoeStackName = "IC2:itemToolHoe",
+	maxRoute = 150,
+	dropSlotsCount = 3,
+	unavailable = {
+		[1] = {x = -2, z = 2},
+		[2] = {x = -2, z = 10},
+		[3] = {x = -11, z = 2},
+		[4] = {x = -11, z = 10},
+		[5] = {x = -18, z = 2},
+		[6] = {x = -18, z = 10},
+		[7] = {x = -25, z = 2},
+		[8] = {x = -25, z = 10},
+		[9] = {x = -32, z = 2},
+		[10] = {x = -32, z = 10},
+		[11] = {x = -41, z = 2},
+		[12] = {x = -41, z = 10},
+		[13] = {x = -5, z = 5},
+		[14] = {x = -5, z = 6},
+		[15] = {x = -5, z = 7},
+		[16] = {x = -16, z = 5},
+		[17] = {x = -16, z = 6},
+		[18] = {x = -16, z = 7},
+		[19] = {x = -27, z = 5},
+		[20] = {x = -27, z = 6},
+		[21] = {x = -27, z = 7},
+		[22] = {x = -38, z = 5},
+		[23] = {x = -38, z = 6},
+		[24] = {x = -38, z = 7},
+	}
+}

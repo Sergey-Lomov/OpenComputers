@@ -1,0 +1,25 @@
+{
+	fieldCorner1 = {x = 0, y = 0, z = 0},
+	fieldCorner2 = {x = -43, y = 0, z = 12},
+	unloadPosition = {x = 0, y = 0, z = 12},
+	unloadSide = 3,
+	unloadFace = 2,
+	toRechargeRoute = {
+		[1] = {x = -2, y = 0, z = 12},
+		[2] = {x = -2, y = 0, z = 14},
+		[3] = {x = -2, y = 2, z = 14},
+		[4] = {x = 1, y = 2, z = 14},
+		[5] = {x = 1, y = 2, z = 21}
+	},
+	fromRechargeRoute = {
+		[1] = {x = 1, y = 1, z = 21},
+		[2] = {x = 1, y = 1, z = 14},
+		[3] = {x = -2, y = 1, z = 14},
+		[4] = {x = -2, y = 0, z = 14},
+		[5] = {x = -2, y = 0, z = 12}
+	},
+	rechargeRate = 0.15,
+	pingTitle = "Фермер C-3",
+	pingRange = 7,
+	pingAllowableDelay = 360
+}

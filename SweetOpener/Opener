@@ -1,0 +1,17 @@
+robot = require("robot")
+utils = require("utils")
+
+statFile = "statistic"
+
+function robot:startOpening()
+	statistic = utils.loadFrom(statFile)
+	statistic.opensCounter = statistic.opensCounter or 0
+
+	while true do
+		if robot.use() then
+			statistic.opensCounter = statistic.opensCounter + 1
+			utils:saveTo(statFile, statistic)
+		end
+	end
+	print("Было открыто " .. tostring(statistic.opensCounter) .. " мешков")
+end
