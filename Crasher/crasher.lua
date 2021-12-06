@@ -6,7 +6,7 @@ local computer = require("computer")
 local component = require("component")
 local status = require("status_client")
 
-local ic = component.inventory_controller
+local inventory = component.inventory_controller
 local rs = component.redstone
 
 local configFile = "config"
@@ -31,7 +31,7 @@ function crasher:waitBlocks()
 
 		if robot.count() ~= 0 then
 			self.sessionSize = robot.count()
-			local blockStack = ic.getStackInInternalSlot(1)
+			local blockStack = inventory.getStackInInternalSlot(1)
 			self.sessionBlock = blockStack.label
 		else
 			status:sendSuccess(successId, config.successMessage)
@@ -42,17 +42,17 @@ function crasher:waitBlocks()
 end
 
 function crasher:suckFirstAvailableStack()
-	for i = 1, ic.getInventorySize(config.inSide), 1 do
-		if ic.getStackInSlot(config.inSide, i) ~= nil then
-			ic.suckFromSlot(config.inSide, i)
+	for i = 1, inventory.getInventorySize(config.inSide), 1 do
+		if inventory.getStackInSlot(config.inSide, i) ~= nil then
+			inventory.suckFromSlot(config.inSide, i)
 			return
 		end
 	end
 end
 
 function crasher:firstEmptySlot(side)
-	for i = 1, ic.getInventorySize(side), 1 do
-		if ic.getStackInSlot(side, i) == nil then
+	for i = 1, inventory.getInventorySize(side), 1 do
+		if inventory.getStackInSlot(side, i) == nil then
 			return i
 		end
 	end
@@ -60,7 +60,7 @@ function crasher:firstEmptySlot(side)
 end
 
 function crasher:pushOutDropIfNecessary()
-	local firstStack = ic.getStackInInternalSlot(1) or {label = ""}
+	local firstStack = inventory.getStackInInternalSlot(1) or {label = ""}
 	if robot.count() ~= 0 and firstStack.label == self.sessionBlock then 
 		return 
 	end
@@ -72,7 +72,7 @@ function crasher:pushOutDropIfNecessary()
 		if robot.count(i) ~= 0 then
 			robot.select(i)
 			local targetSlot = self:firstEmptySlot(config.outSide)
-			ic.dropIntoSlot(config.outSide, targetSlot)
+			inventory.dropIntoSlot(config.outSide, targetSlot)
 		end
 	end
 	robot.select(1)
@@ -81,7 +81,7 @@ end
 function crasher:updateStatistic()
 	local drop = {}
 	for i = 1, robot.inventorySize(config.outSide), 1 do
-		local stack = ic.getStackInInternalSlot(i)
+		local stack = inventory.getStackInInternalSlot(i)
 		if stack ~= nil then
 			drop[stack.label] = (drop[stack.label] or 0) + stack.size
 		end
@@ -111,9 +111,9 @@ function crasher:rechargeTool()
 end
 
 function crasher:getToolStack()
-	ic.equip()
-	local toolStack = ic.getStackInInternalSlot(1)
-	ic.equip()
+	inventory.equip()
+	local toolStack = inventory.getStackInInternalSlot(1)
+	inventory.equip()
 	return toolStack
 end
 
@@ -123,9 +123,11 @@ function crasher:getCharge()
 end
 
 function crasher:start()
-	status.pingId = computer.address()
+	status.pingId = inventory.address
+	status.pingTitle = config.pingTitle
+	status.pingAllowableDelay = config.pingAllowableDelay
 	status.pingRange = config.pingRange
-	status:requestPingWaiting(config.pingTitle, config.pingAllowableDelay)
+	status:sendPing(true)
 
 	while true do
 		self:waitBlocks()

@@ -18,8 +18,10 @@ end
 
 function farmer:start()
 	status.pingId = self.inventory.address
+	status.pingTitle = self.config.pingTitle
+	status.pingAllowableDelay = self.config.pingAllowableDelay
 	status.pingRange = self.config.pingRange
-	status:requestPingWaiting(self.config.pingTitle, self.config.pingAllowableDelay)
+	status:sendPing(true)
 
 	while true do
 		self:runSession()

@@ -15,8 +15,8 @@ richEnergy = 0.8
 idleTime = 5
 perchStack = 64
 perchLimit = 2 -- If robot have only 2 perch in active slot it should return to charger for get more
-pingAllowableDelay = 30
-pingRange = 16
+pingAllowableDelay = 60
+pingRange = 24
 
 Commands = {
     stopWork = "стой",
@@ -81,9 +81,11 @@ function farmBot:start()
 
     component.modem.open(shared.port)
 
-    status.pingId = computer.address()
+    status.pingId = inventory.address
+    status.pingTitle = farmBot.configuration.pingTitle
+    status.pingAllowableDelay = pingAllowableDelay
     status.pingRange = pingRange
-    status:requestPingWaiting(farmBot.configuration.pingTitle, pingAllowableDelay)
+    status:sendPing(true)
     
     farmBot:startChatHandling() 
     farmBot:performNextAction(false)

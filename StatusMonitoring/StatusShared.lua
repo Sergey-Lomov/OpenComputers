@@ -3,7 +3,6 @@ StatusMessageType = {
     WARNING = 1,
     PROBLEM = 2,
     PING = 3,
-    PING_REQUEST = 4,
     CANCEL = 5
 }
 

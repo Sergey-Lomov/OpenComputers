@@ -6,6 +6,7 @@ local component = require("component")
 local computer = require("computer")
 local term = require("term")
 local serialization = require("serialization")
+local unicode = require("unicode")
 local ui = require("uimanager")
 
 local stateFile = "status_state"
@@ -24,8 +25,9 @@ local statusHandler = {
 	timer = nil,
 
 	updateFrequency = 10,
+	invalidPingId = "status_system_invalid_ping",
 	screenWidth = 60,
-	screenHeight = 20
+	screenHeight = 20,
 }
 
 Phrases = {
@@ -33,7 +35,8 @@ Phrases = {
 	successesTitle = "Успехи",
 	warningsTitle = "Проблемы",
 	problemsTitle = "Критические проблемы",
-    pingFailed = "Потеряна связь с "
+    pingFailed = "Потеряна связь с ",
+    invalidPing = "Неверный пакет пинга: "
 }
 
 Colors = {
@@ -64,22 +67,24 @@ function statusHandler:loadState()
 	self.pingWaiters = state.pingWaiters or {}
 end
 
-function statusHandler:handlePingRequest(request)
-	local waiter = {
-		title = request.title,
-		allowableDelay = request.allowableDelay,
-		lastPing = computer.uptime()
-	}
-	self.pingWaiters[request.id] = waiter
-	self:saveState()
-end
-
-function statusHandler:handlePing(enityId)
-	local waiter = self.pingWaiters[enityId]
-	if waiter ~= nil then
-		waiter.lastPing = computer.uptime()
-		self:cancelStatus(enityId)
+function statusHandler:handlePing(ping)
+	if ping.id == nil or ping.title == nil or ping.allowableDelay == nil then
+		local serialized = serialization.serialize(ping)
+		self.problems[self.invalidPingId] = Phrases.invalidPing .. tostring(serialized)
+		return
 	end
+
+	local waiter = self.pingWaiters[ping.id]
+	if waiter == nil then
+		self.pingWaiters[ping.id] = {}
+		waiter = self.pingWaiters[ping.id]
+	end
+
+	waiter.title = ping.title
+	waiter.allowableDelay = ping.allowableDelay
+	waiter.lastPing = computer.uptime()
+	self.problems[ping.id] = nil
+
 	self:saveState()
 end
 
@@ -117,9 +122,10 @@ function statusHandler:update()
 end
 
 function statusHandler:removeWaiterByTitle(title)
-	for id, waiter in pair(self.pingWaiters) do
+	for id, waiter in pairs(self.pingWaiters) do
 		if waiter.title == title then
 			self.pingWaiters[id] = nil
+			self.problems[id] = nil
 		end
 	end
 	self:saveState()
@@ -131,18 +137,29 @@ function statusHandler:updateAndShowPingWaiters()
 	ui:setTextColor(Colors.title)
 	ui:printHeader(Phrases.pingTitle, "=")
 
+	local statuses = {}
+
 	for id, waiter in pairs(self.pingWaiters) do
-		local color = Colors.pingSuccess
+		local isFailed = false
 		local allowableTime = waiter.lastPing + waiter.allowableDelay
 		
 		if computer.uptime() > allowableTime then
 			local message = Phrases.pingFailed .. waiter.title
 			self:handleStatus(StatusMessageType.PROBLEM, id, message)
-			color = Colors.pingFailed
+			isFailed = true
 		end
 
+		local status = {isFailed = isFailed, title = waiter.title}
+		table.insert(statuses, status)
+	end
+
+	local comparator = function(s1, s2) return unicode.lower(s1.title) < unicode.lower(s2.title) end
+	table.sort(statuses, comparator)
+
+	for _, status in pairs(statuses) do
+		local color = status.isFailed and Colors.pingFailed or Colors.pingSuccess
 		ui:setTextColor(color)
-		print(waiter.title)
+		print(status.title)
 	end
 end
 
@@ -170,19 +187,19 @@ end
 
 function statusHandler:handleModemEvent(...)
 	local _,_,_,_,_,type,data = table.unpack { ... }
-    if type == StatusMessageType.PING_REQUEST then
+
+    if type == StatusMessageType.PING then
     	local payload = serialization.unserialize(data)
-        self:handlePingRequest(payload)
-    elseif type == StatusMessageType.PING then
-        self:handlePing(data)
+        self:handlePing(payload)
     elseif type == StatusMessageType.CANCEL then
         self:cancelStatus(data)
-    else
+    elseif type == StatusMessageType.SUCCESS or type == StatusMessageType.WARNING or type == StatusMessageType.PROBLEM then
     	local payload = serialization.unserialize(data)
         self:handleStatus(type, payload.id, payload.message)
     end
 end
 
+-- This wrapper should be used for cancel listening
 local function handleModemEvent(...)
 	statusHandler:handleModemEvent(...)
 end
