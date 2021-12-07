@@ -12,7 +12,7 @@ local client = {
 	pingId = 0,
 	pingTitle = "",
 	pingAllowableDelay = 30,
-	pingRange = nil
+	statusStrength = nil
 }
 
 local function initClient()
@@ -24,11 +24,22 @@ local function initClient()
 	end
 end
 
+function client:broadcast(status, payload)
+	local initialRange = self.modem.getStrength()
+	if self.statusStrength ~= nil then
+		self.modem.setStrength(self.statusStrength)
+	end
+	
+	self.modem.broadcast(statusSystemPort, status, payload)
+
+	self.modem.setStrength(initialRange)
+end
+
 function client:sendStatus(status, id, message)
 	if self.modem == nil then return end
 	local payload = {id = id, message = message}
 	local serialized = serialization.serialize(payload)
-	self.modem.broadcast(statusSystemPort, status, serialized)
+	self:broadcast(status, serialized)
 end
 
 function client:sendSuccess(id, message)
@@ -45,7 +56,7 @@ end
 
 function client:cancelStatus(id)
 	if self.modem == nil then return end
-	self.modem.broadcast(statusSystemPort, StatusMessageType.CANCEL, id)
+	self:broadcast(StatusMessageType.CANCEL, id)
 end
 
 function client:sendPing(forced)
@@ -55,11 +66,6 @@ function client:sendPing(forced)
 	local isToFast = computer.uptime() - self.lastPing < self.minPingInterval
 	if isToFast and not forced then return end
 
-	local initialRange = self.modem.getStrength()
-	if self.pingRange ~= nil then
-		self.modem.setStrength(self.pingRange)
-	end
-
 	local payload = {
 		id = self.pingId,
 		title = self.pingTitle,
@@ -67,8 +73,7 @@ function client:sendPing(forced)
 	}
 	local serialized = serialization.serialize(payload)
 
-	self.modem.broadcast(statusSystemPort, StatusMessageType.PING, serialized)
-	self.modem.setStrength(initialRange)
+	self:broadcast(StatusMessageType.PING, serialized)
 	self.lastPing = computer.uptime()
 end
 

@@ -14,7 +14,7 @@ local statsFile = "stats"
 
 local config = utils:loadFrom(configFile)
 local stats = utils:loadFrom(statsFile)
-local waitingStep = 2
+local waitingStep = 1
 
 local crasher = {
 	sessionSize = 0, -- Amount of blocks in current seesion (between two sucks from income buffer)
@@ -126,7 +126,7 @@ function crasher:start()
 	status.pingId = inventory.address
 	status.pingTitle = config.pingTitle
 	status.pingAllowableDelay = config.pingAllowableDelay
-	status.pingRange = config.pingRange
+	status.statusStrength = config.statusStrength
 	status:sendPing(true)
 
 	while true do

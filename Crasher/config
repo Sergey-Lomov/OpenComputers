@@ -4,8 +4,8 @@
 	chargeLimit = 500,
 	chargeKey = "energy",
 	maxChargeKey = "maxEnergy",
+	statusStrength = 8,
 	pingTitle = "Дробитель",
-	pingRange = 25,
 	pingAllowableDelay = 60,
 	successMessage = "Дробитель завершил работу"
 }

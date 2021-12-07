@@ -20,7 +20,7 @@ function farmer:start()
 	status.pingId = self.inventory.address
 	status.pingTitle = self.config.pingTitle
 	status.pingAllowableDelay = self.config.pingAllowableDelay
-	status.pingRange = self.config.pingRange
+	status.statusStrength = self.config.statusStrength
 	status:sendPing(true)
 
 	while true do

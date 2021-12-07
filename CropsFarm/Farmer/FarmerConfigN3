@@ -20,6 +20,6 @@
 	},
 	rechargeRate = 0.15,
 	pingTitle = "Фермер C-3",
-	pingRange = 7,
+	statusStrength = 7,
 	pingAllowableDelay = 480
 }
