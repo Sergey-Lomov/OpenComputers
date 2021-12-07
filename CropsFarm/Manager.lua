@@ -40,7 +40,7 @@ Labels = {
     getResolution = "Harwest",
     waitingResolution = "Growing",
 
-    superWeedProblemMessage = "Обнаружен сорняк 3его размера"
+    superWeedProblemMessage = "Обнаружен сорняк критического размера"
 }
 
 -- Colors
@@ -135,6 +135,7 @@ function farmTasksManager:broadcastTasks()
     end
     
     local initialColor = gpu.getForeground()
+    local criticalWeedDetected = false
     
     self.tasks = {}
     for id, position in pairs(perches) do
@@ -164,8 +165,7 @@ function farmTasksManager:broadcastTasks()
         if kind == weedKind then
             kindConfig = weedConfig
             if size >= weedCriticalSize then
-                local statusId = computer.address() .. weedProblemPostfix
-                status:sendProblem(statusId, Labels.superWeedProblemMessage)
+                criticalWeedDetected = true
             end
         elseif kind == "" then
             gpu.setForeground(Colors.common)
@@ -242,12 +242,19 @@ function farmTasksManager:broadcastTasks()
         
         ::continue::
     end
-    
+
     gpu.setForeground(Colors.secondayInfo)
     gpu.set(1,1, tostring(updatesCounter))
     updatesCounter = updatesCounter + 1
 
     gpu.setForeground(initialColor)
+
+    local weedIssueId = computer.address() .. weedProblemPostfix
+    if criticalWeedDetected then
+        status:sendProblem(weedIssueId, Labels.superWeedProblemMessage)
+    else 
+        status:cancelStatus(weedIssueId)
+    end
 
     local serialized = serialization.serialize(self.tasks)
     component.modem.broadcast(shared.port, MessagesCodes.TASKS_BROADCAST, serialized)
