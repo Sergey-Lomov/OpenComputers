@@ -50,20 +50,6 @@ function utils:showInfo(message)
     self:showMessage(message, self.infoColor)
 end
 
-function shortTraceback()
-    local level = 1
-    while true do
-        local info = debug.getinfo(level, "Sl")
-        if not info then break end
-        if info.what == "C" then   -- is a C function?
-            print(level, "C function")
-        else   -- a Lua function
-            print(string.format("[%s]:%d", info.short_src, info.currentline))
-        end
-        level = level + 1
-    end
-end
-
 function utils:profile(func)
     local startTime = os.time()
     local startEnergy = computer.energy()
@@ -76,6 +62,24 @@ end
 function utils:profileEvents()
     while true do
         print(event.pull())
+    end
+end
+
+function utils:realWorldSeconds()
+    return os.time() * 0.01389 -- os.time() returns time in in-game second, which should be * 1000 / 60 / 60 / 20 to get realworld seconds
+end
+
+function shortTraceback()
+    local level = 1
+    while true do
+        local info = debug.getinfo(level, "Sl")
+        if not info then break end
+        if info.what == "C" then   -- is a C function?
+            print(level, "C function")
+        else   -- a Lua function
+            print(string.format("[%s]:%d", info.short_src, info.currentline))
+        end
+        level = level + 1
     end
 end
 
