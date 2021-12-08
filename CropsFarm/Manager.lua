@@ -173,7 +173,7 @@ function farmTasksManager:broadcastTasks()
             gpu.set(x, z + 1, label) 
             goto continue 
         elseif kindConfig == nil then
-            gpu.setForeground(Colors.critical)
+            gpu.setForeground(Colors.unspec)
             local kindLabel = farmTasksManager:formattedString(kind)
             gpu.set(x, z, kindLabel)
             local paramsLabel = tostring(gain) .. " " .. tostring(growth) .. " " .. tostring(resistance)
