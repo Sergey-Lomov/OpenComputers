@@ -1,0 +1,16 @@
+{
+	updateFrequency = 10,
+	screenWidth = 60,
+	screenHeight = 20,
+	alarmRange = 120,
+	alertBlinkFrequency = 1,
+	successLambs = {
+		{id = "4eeaecd2-2a32-4641-a222-50115cbda2f2", side = 2}
+	},
+	warningLambs = {
+		{id = "c45acaf3-0598-455f-9761-f6ab3e72e880", side = 2}
+	},
+	problemLambs = {
+		{id = "258cc12e-a55c-4dce-9057-777e12fe207c", side = 2}
+	}
+}

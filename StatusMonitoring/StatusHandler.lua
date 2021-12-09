@@ -1,33 +1,43 @@
 require("utils")
 require("status_shared")
+require("red_out")
 
 local event = require("event")
-local component = require("component")
+local component = require("extended_component")
 local computer = require("computer")
 local term = require("term")
 local serialization = require("serialization")
 local unicode = require("unicode")
 local ui = require("uimanager")
 
+local configFile = "statusConfig"
 local stateFile = "status_state"
+local invalidPingId = "status_system_invalid_ping"
+
 local gpu = term.gpu()
 
 local statusHandler = {
+	timer = nil,
+	redAlertTimer = nil,
+
+	-- Stored in state file
 	successes = {},
 	warnings = {},
 	problems = {},
-	lambs = {
-		successes = nil,
-		warnings = nil,
-		problems = nil,
-	},
 	pingWaiters = {},
-	timer = nil,
 
+	-- Configured from config
 	updateFrequency = 10,
-	invalidPingId = "status_system_invalid_ping",
 	screenWidth = 60,
 	screenHeight = 20,
+	alarmRange = 120,
+	alertBlinkFrequency = 1,
+
+	lambs = {
+		success = {},
+		warning = {},
+		problem = {},
+	},
 }
 
 Phrases = {
@@ -49,6 +59,14 @@ Colors = {
 }
 
 -- Private methods
+function statusHandler:getAlarm()
+	local alarm = component.safePrimary("os_alarm")
+	if alarm ~= nil and self.alarmRange ~= nil then
+		alarm.setRange(self.alarmRange)
+	end
+	return alarm
+end
+
 function statusHandler:saveState()
 	local state = {
 		successes = self.successes,
@@ -70,7 +88,7 @@ end
 function statusHandler:handlePing(ping)
 	if ping.id == nil or ping.title == nil or ping.allowableDelay == nil then
 		local serialized = serialization.serialize(ping)
-		self.problems[self.invalidPingId] = Phrases.invalidPing .. tostring(serialized)
+		self.problems[invalidPingId] = Phrases.invalidPing .. tostring(serialized)
 		return
 	end
 
@@ -113,7 +131,8 @@ function statusHandler:update()
 		
 	self:updateAndShowPingWaiters()
 	self:showStatuses()
-	self:updateLambs()
+	self:updateNotifiers()
+	
 	if ui:isTextColorRestorable() then
 		ui:restoreInitialTextColor()
 	end
@@ -181,8 +200,39 @@ function statusHandler:showStatuses()
 	self:showStatusesFromTable(self.problems, Phrases.problemsTitle, Colors.problem)
 end
 
-function statusHandler:updateLambs()
+function statusHandler:updateNotifiers()
+	-- Handle successes
+	local haveSuccesses = next(self.successes) ~= nil
+	RedOut.setStatusForAll(haveSuccesses, self.lambs.success)
 
+	-- Hande warnings
+	local haveWarnings = next(self.warnings) ~= nil
+	RedOut.setStatusForAll(haveWarnings, self.lambs.warning)
+
+	-- Handle problems
+	local haveProblems = next(self.problems) ~= nil
+
+	local alarm = self:getAlarm()
+	if alarm ~= nil then
+		local alarmFunc = haveProblems and alarm.activate or alarm.deactivate
+		alarmFunc()
+	end
+
+	if haveProblems then
+		RedOut.setStatusForAll(haveProblems, self.lambs.problem)
+		if self.redAlertTimer == nil then
+			local blinkAlert = function()
+				RedOut.invertAll(self.lambs.problem)
+			end
+			self.redAlertTimer = event.timer(self.alertBlinkFrequency, blinkAlert, math.huge)
+		end
+	else
+		RedOut.setStatusForAll(false, self.lambs.problem)
+		if self.redAlertTimer ~= nil then
+			event.cancel(self.redAlertTimer)
+			self.redAlertTimer = nil
+		end
+	end
 end
 
 function statusHandler:handleModemEvent(...)
@@ -199,6 +249,20 @@ function statusHandler:handleModemEvent(...)
     end
 end
 
+function statusHandler:loadConfig()
+	local config = utils:loadFrom(configFile)
+
+	self.updateFrequency = config.updateFrequency
+	self.screenWidth = config.screenWidth
+	self.screenHeight = config.screenHeight
+	self.alarmRange = config.alarmRange
+	self.alertBlinkFrequency = config.alertBlinkFrequency
+
+	self.lambs.success = RedOut:fromRawArray(config.successLambs)
+	self.lambs.warning = RedOut:fromRawArray(config.warningLambs)
+	self.lambs.problem = RedOut:fromRawArray(config.problemLambs)
+end
+
 -- This wrapper should be used for cancel listening
 local function handleModemEvent(...)
 	statusHandler:handleModemEvent(...)
@@ -207,6 +271,8 @@ end
 -- Public methods
 
 function statusHandler:start()
+	self:loadConfig()
+
 	self:loadState()
 	for id, waiter in pairs(self.pingWaiters) do
 		waiter.lastPing = computer.uptime()
@@ -227,6 +293,17 @@ function statusHandler:stop()
 	component.modem.close(statusSystemPort)
 	event.cancel(self.timer)
 	self.timer = nil
+
+	if self.redAlertTimer ~= nil then
+		event.cancel(self.redAlertTimer)
+		self.redAlertTimer = nil
+	end
+	RedOut.setStatusForAll(false, self.lambs.success)
+	RedOut.setStatusForAll(false, self.lambs.warning)
+	RedOut.setStatusForAll(false, self.lambs.problem)
+
+	local alarm = self:getAlarm()
+	if alarm ~= nil then alarm.deactivate() end
 
 	ui:restoreScreenSize()
 end
