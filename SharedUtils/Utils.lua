@@ -12,7 +12,7 @@ function utils:pr(e)
 	for k,v in pairs(e) do print(k,v) end
 end
 
-function utils:loadFrom(fileName)
+function utils:loadFrom(fileName, rawConverters)
     local serialized = ""
     local file = io.open(fileName, "r")
     if file ~= nil then
@@ -24,7 +24,27 @@ function utils:loadFrom(fileName)
         serialized = "{}"
     end
     
-    return serialization.unserialize(serialized)
+    local result = serialization.unserialize(serialized)
+    local converters = rawConverters or {}
+    if next(converters) == nil then return result end
+
+    self:applyConverters(result, converters)
+    return result
+end
+
+function utils:applyConverters(tab, converters)
+    for key, value in pairs(tab) do
+        if type(value) ~= "table" then goto continue end
+
+        self:applyConverters(value, converters)
+        local converter = converters[key] or {}
+        local fromRawFunc = converter.fromRaw
+        if fromRawFunc ~= nil then
+            tab[key] = fromRawFunc(value)
+        end
+
+        ::continue::
+    end
 end
 
 function utils:saveTo(fileName, entity)
