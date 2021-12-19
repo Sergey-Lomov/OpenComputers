@@ -2,8 +2,10 @@ require("utils")
 require("status_shared")
 
 local computer = require("computer")
-local component = require("component")
+local component = require("extended_component")
 local serialization = require("serialization")
+
+local historyFile = "statusHistory"
 
 local client = {
 	modem = nil,
@@ -12,27 +14,34 @@ local client = {
 	pingId = 0,
 	pingTitle = "",
 	pingAllowableDelay = 30,
-	statusStrength = nil
+	statusStrength = nil,
+	history = {},
+	historyLimit = 20
 }
 
-local function initClient()
-	if next(component.list("modem")) == nil then
+function client:init()
+	self.modem = component.safePrimary("modem")
+	if self.modem == nil then
 		utils:showError("Status client require modem component")
 		return
-	else
-		client.modem = component.modem
 	end
+
+	self.history = utils:loadFrom(historyFile)
 end
 
 function client:broadcast(status, payload)
-	local initialRange = self.modem.getStrength()
-	if self.statusStrength ~= nil then
+	local initialRange = 0
+	local useStrengthConstaint = self.modem.isWireless() and self.statusStrength ~= nil
+	if useStrengthConstaint then
+		initialRange = self.modem.getStrength()
 		self.modem.setStrength(self.statusStrength)
 	end
 	
 	self.modem.broadcast(statusSystemPort, status, payload)
-
-	self.modem.setStrength(initialRange)
+	
+	if useStrengthConstaint then
+		self.modem.setStrength(initialRange)
+	end
 end
 
 function client:sendStatus(status, id, message)
@@ -40,6 +49,9 @@ function client:sendStatus(status, id, message)
 	local payload = {id = id, message = message}
 	local serialized = serialization.serialize(payload)
 	self:broadcast(status, serialized)
+
+	self.history[id] = true
+	utils:saveTo(historyFile, self.history)
 end
 
 function client:sendSuccess(id, message)
@@ -54,9 +66,14 @@ function client:sendProblem(id, message)
 	self:sendStatus(StatusMessageType.PROBLEM, id, message)
 end
 
-function client:cancelStatus(id)
+function client:cancelStatus(id, filterByHistory)
+	filterByHistory = filterByHistory or false
+	if filterByHistory and self.history[id] == nil then return end
+
 	if self.modem == nil then return end
 	self:broadcast(StatusMessageType.CANCEL, id)
+	self.history[id] = nil
+	utils:saveTo(historyFile, self.history)
 end
 
 function client:sendPing(forced)
@@ -77,6 +94,6 @@ function client:sendPing(forced)
 	self.lastPing = computer.uptime()
 end
 
-initClient()
+client:init()
 
 return client
