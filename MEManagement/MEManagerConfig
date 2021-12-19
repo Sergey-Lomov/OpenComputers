@@ -1,6 +1,7 @@
 {
 	chestType = "iron",
 	frequency = 10,
+	destroySide = "UP",
 	queue = {
 		cpuWhitelist = {"A1", "B1", "C1", "D1"},
 		cpuBlacklist = {},

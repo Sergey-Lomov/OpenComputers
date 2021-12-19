@@ -5,6 +5,7 @@ event = require("event")
 
 utils = {
 	errorColor = 0xFF0000,
+    warningColor = 0xFFFF00,
     infoColor = 0xAAAAAA
 }
 
@@ -68,6 +69,10 @@ end
 
 function utils:showInfo(message)
     self:showMessage(message, self.infoColor)
+end
+
+function utils:showWarning(message)
+    self:showMessage(message, self.warningColor)
 end
 
 function utils:profile(func)

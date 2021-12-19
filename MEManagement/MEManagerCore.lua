@@ -1,4 +1,5 @@
-require "items_config_fingerprint"
+require 'extended_table'
+require 'items_config_fingerprint'
 
 local utils = require 'utils'
 local component = require 'extended_component'
@@ -26,12 +27,6 @@ local Phrases = {
 	extraCrafting = "Создание %s длится уже %d мин"
 }
 
-local StartStatus = {
-	success = 0,
-	missedChest = 1,
-	missedInterface = 2
-}
-
 local manager = {
 	managerConfig = {},
 	itemsConfig = {},
@@ -39,7 +34,8 @@ local manager = {
 	itemsConfigUpdated = false,
 	chest = nil,
 	interface = nil,
-	routineTimer = nil
+	routineTimer = nil,
+	isDestroyConfigured = false
 }
 
 local function chestStackToViev(stack)
@@ -54,9 +50,9 @@ end
 
 function manager:updateManagerConfig()
 	self.managerConfig = utils:loadFrom(managerConfigFile)
-	self.chest = component.safePrimary(self.managerConfig.chestType)
 	self.managerConfigUpdated = true
 	queue.config = self.managerConfig.queue
+	return self:setupSystemElements()
 end
 
 function manager:updateItemsConfig()
@@ -96,6 +92,13 @@ end
 
 function manager:handleItem(fingerprint, config)
 	local item = self.interface.getItemDetail(fingerprint:toMEFormat(), false)
+
+	self:handleItemStatuses(fingerprint, config, item)
+	self:handleItemDestroy(fingerprint, config, item)
+	self:handleItemCraft(fingerprint, config, item)
+end
+
+function manager:handleItemStatuses(fingerprint, config, item)
 	local amount = item.qty
 
 	local problemLimit = config.problem or -1
@@ -115,23 +118,39 @@ function manager:handleItem(fingerprint, config)
 	else 
 		status:cancelStatus(warningId, true)
 	end
+end
 
-	if config.craft ~= nil then
-		self:handleItemCraft(fingerprint, config.craft, amount)
+function manager:handleItemDestroy(fingerprint, config, item)
+	if config.destroy == nil then return end
+	if not self.isDestroyConfigured then return end
+
+	local amount = item.qty
+	local maxPortion = item.max_size
+	local destroyAmount = amount - config.destroy
+
+	while destroyAmount > 0 do 
+		local portion = math.min(maxPortion, destroyAmount)
+		local result = self.interface.exportItem(self.managerConfig.destroySide)
+		if result.size == 0 then
+			return -- If interface can export any item, manager should stop to try to expot items
+		end
+		destroyAmount = destroyAmount - result.size
 	end
 end
 
-function manager:handleItemCraft(fingerprint, craftConfig, amount)
-	if amount >= craftConfig.limit then return end
-	local portion = craftConfig.portion or math.huge
-	local totalAmount = craftConfig.limit - amount
+function manager:handleItemCraft(fingerprint, config, item)
+	if config.craft == nil then return end
+	local amount = item.qty
+
+	if amount >= config.craft.limit then return end
+	local portion = config.craft.portion or math.huge
+	local totalAmount = config.craft.limit - amount
 	local requestAmount = math.min(portion, totalAmount)
-	queue:addRequest(fingerprint, requestAmount, totalAmount, craftConfig.priority)
+	queue:addRequest(fingerprint, requestAmount, totalAmount, config.craft.priority)
 end
 
 function manager:routine()
 	if not self.managerConfigUpdated then
-		self:updateManagerConfig()
 		self:stop()
 		self:start(false)
 	end
@@ -191,21 +210,44 @@ function manager:configureQueueCallbacks()
 	end
 end
 
+function manager:setupSystemElements()
+	self.interface = component.safePrimary("me_interface")
+	if self.interface == nil then
+		utils:showError("Can't find ME interface")
+		return false
+	end
+	queue.interface = self.interface
+
+	local validSides = {"UP", "DOWN", "NORTH", "SOUTH", "EAST", "WEST"}
+	local destroySide = self.managerConfig.destroySide or "[missed]"
+	if not table.containsValue(validSides, destroySide) then
+		utils:showError("Invalid destroy side: " .. destroySide)
+		self.isDestroyConfigured = false
+		return false
+	end
+
+	if self.interface.canExport(destroySide) then
+		self.isDestroyConfigured = true
+	else
+		self.isDestroyConfigured = false
+		utils:showWarning("Impossible to export items to destroy side: " .. destroySide)
+	end
+
+	self.chest = component.safePrimary(self.managerConfig.chestType)
+	if self.chest == nil then
+		utils:showError("Can't find chest")
+		return false
+	end
+
+	return true
+end
+
 function manager:start(immideatelyIteration)
 	immideatelyIteration = immideatelyIteration or true
 
-	self:updateManagerConfig()
-	self:updateItemsConfig()
-
-	if self.chest == nil then
-		return StartStatus.missedChest
+	if not self:updateManagerConfig() then
+		return false
 	end
-
-	self.interface = component.safePrimary("me_interface")
-	if self.interface == nil then
-		return StartStatus.missedInterface
-	end
-	queue.interface = self.interface
 
 	local routine = function()
 		manager:routine()
@@ -218,7 +260,7 @@ function manager:start(immideatelyIteration)
 
 	queue:start()
 
-	return StartStatus.success
+	return false
 end
 
 function manager:stop()

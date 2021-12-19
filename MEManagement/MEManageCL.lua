@@ -42,6 +42,16 @@ function managercl:addItem(index)
 		end
 	end
 
+	print("Enter DESTROY level (may be empty)")
+	local destroyLevel = tonumber(term.read())
+	if destroyLevel ~= nil and destroyLevel >= 0 then 
+		print("Please enter \'destroy\' to aaprove destory level")
+		local code = term.read():sub(1, -2)
+		if code == "destroy" then
+			config.destroy = destroyLevel
+		end
+	end
+
 	print("Would you add autocrafting? (y/n)")
 	local addAutocraft = term.read():sub(1, -2)
 	if addAutocraft == "y" or addAutocraft == "Y" then
