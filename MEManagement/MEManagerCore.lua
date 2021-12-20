@@ -127,10 +127,11 @@ function manager:handleItemDestroy(fingerprint, config, item)
 	local amount = item.qty
 	local maxPortion = item.max_size
 	local destroyAmount = amount - config.destroy
+	local side = self.managerConfig.destroySide
 
 	while destroyAmount > 0 do 
 		local portion = math.min(maxPortion, destroyAmount)
-		local result = self.interface.exportItem(self.managerConfig.destroySide)
+		local result = self.interface.exportItem(fingerprint:toMEFormat() , side, portion)
 		if result.size == 0 then
 			return -- If interface can export any item, manager should stop to try to expot items
 		end
