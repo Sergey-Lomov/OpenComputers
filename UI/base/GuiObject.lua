@@ -57,3 +57,16 @@ function GuiObject:drawBy(drawer)
 	end
 	drawer:decreaseOffset(self.frame.x, self.frame.y)
 end
+
+-- Event handling
+function GuiObject:handleEvent(event)
+	if self[event.handlingFunc] ~= nil then
+		self[event.handlingFunc](event)
+		if event.handled then return end
+	end
+
+	for _, child in ipairs(self.childs) do
+		child:handleEvent(event)
+		if event.handled then return end
+	end
+end

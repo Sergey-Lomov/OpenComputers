@@ -18,6 +18,8 @@ function GuiEvent:new(type, handlingFunc)
 	local event = {}
 	setmetatable(event, self)
 	event.type = type
+	event.handlingFunc = handlingFunc
+	event.handled = false
 
 	return event
 end
@@ -27,7 +29,7 @@ FramesUpdateEvent = GuiEvent:new(GuiEventType.framesUpdate, "onFramesUpdate")
 FramesUpdateEvent.__index = FramesUpdateEvent
 
 function FramesUpdateEvent:new()
-	local event = {}
+	local event = GuiEvent:new(GuiEventType.framesUpdate, "onFramesUpdate")
 	setmetatable(event, self)
 	return event
 end
@@ -37,7 +39,7 @@ TapEvent = GuiEvent:new(GuiEventType.tap, "onTap")
 TapEvent.__index = TapEvent
 
 function TapEvent:new(x, y, button)
-	local event = {}
+	local event = GuiEvent:new(GuiEventType.tap, "onTap")
 	setmetatable(event, self)
 	
 	event.x = x or 0

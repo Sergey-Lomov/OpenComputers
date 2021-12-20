@@ -1,5 +1,6 @@
 -- Screen is top level GuiObject
 require 'Drawer'
+require 'EventsManager'
 require 'GuiObject'
 
 GuiScreen = GuiObject:new()
@@ -17,6 +18,8 @@ function GuiScreen:new(gpu, background)
 	screen.frame = Rect:new(0, 0, width, height)
 	screen.background = background or 0x000000
 	screen.drawer = Drawer:new(gpu)
+
+	EventsManager:appendScreen(screen)
 
 	return screen
 end
