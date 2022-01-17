@@ -12,7 +12,6 @@ rs = component.redstone
 configFile = "config"
 waitingStep = 2
 
-
 mason = {
 	config = {},
 	iteration = 1
