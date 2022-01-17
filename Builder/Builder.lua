@@ -1,6 +1,6 @@
 local utils = require ("utils")
 local component = require("component")
-local icExtender = require("inventory_extender")
+local icExtender = require("ic_extender")
 
 local builder = {
 	navigator = require("navigator"),
@@ -56,7 +56,7 @@ function builder:load(fileName)
 	self.schema = utils:loadFrom(fileName)
 end
 
-function builder:build(fromBottom, verify)
+function builder:build(fromBottom, verify, fromPosition, faceCode)
 	if fromBottom == nil then fromBottom = true end
 	if verify == nil then verify = true end
 
@@ -64,6 +64,11 @@ function builder:build(fromBottom, verify)
 		if not self:verifyInventory(self.schema) then
 			return
 		end
+	end
+
+	if fromPosition ~= nil then
+		self.navigator:goTo(fromPosition)
+		self.navigator:faceTo(faceCode or 0)
 	end
 
 	self.navigator.x = 1
@@ -108,7 +113,7 @@ end
 
 function builder:init()
 	icExtender:extend(self.inventory)
-	self.navigator:nullify()
+	self.navigator:restoreState()
 end
 
 builder:init()

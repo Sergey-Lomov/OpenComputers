@@ -22,6 +22,7 @@ local crasher = {
 }
 
 function crasher:waitBlocks()
+	robot.select(1)
 	local successId = computer.address() .. "_success"
 	status:sendPing()
 	while robot.count() == 0 do
@@ -163,7 +164,7 @@ function crasher:setup()
 		config.chargeKey = "energy"
 		config.maxChargeKey = "maxEnergy"
 	else
-		utils:showError("Неверны индекс мода")
+		utils:showError("Неверный индекс мода")
 	end
 
 	utils:saveTo(configFile, config)

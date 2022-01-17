@@ -14,6 +14,11 @@ function utils:pr(e)
 end
 
 function utils:loadFrom(fileName, rawConverters)
+    if fileName == nil then
+        self:showError("loafFrom called with missed file name")
+        return {}
+    end
+
     local serialized = ""
     local file = io.open(fileName, "r")
     if file ~= nil then

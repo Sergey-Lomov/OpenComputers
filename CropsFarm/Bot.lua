@@ -9,14 +9,17 @@ shared = require("shared")
 status = require("status_client")
 
 inventory = component.inventory_controller
-configFile = "config"
-criticalEnergy = 0.25
-richEnergy = 0.8
-idleTime = 5
-perchStack = 64
-perchLimit = 2 -- If robot have only 2 perch in active slot it should return to charger for get more
-pingAllowableDelay = 60
-statusStrength = 24
+require("ic_extender"):extend(inventory)
+
+local perchesStackName = "IC2:blockCrop"
+local configFile = "config"
+local criticalEnergy = 0.25
+local richEnergy = 0.8
+local idleTime = 5
+local perchStack = 64
+local perchLimit = 2 -- If robot have only 2 perch in active slot it should return to charger for get more
+local pingAllowableDelay = 60
+local statusStrength = 24
 
 Commands = {
     stopWork = "стой",
@@ -125,7 +128,8 @@ end
 function farmBot:handleVoiceCommand(author, message)
 
     local usersList = farmBot.configuration.voiceUsers
-    local chat = component.chat
+
+local chat = component.chat
     
     if string.find(message, farmBot.configuration.voicePrefix) ~= 1 then
         -- Message not addressed to robot
@@ -193,6 +197,7 @@ end
 function farmBot:reportTask(task)
     local workPhrase = Phrases.destroyAt
     if task.work == Works.GET_SEEDS then
+
         workPhrase = Phrases.harvestAt
     end
     
@@ -215,14 +220,13 @@ function farmBot:performNextAction(tasksUpdated)
     local nextTaskIndex = self.currentTaskIndex + 1
     local nextTask = self.tasks[nextTaskIndex]
     
-    if (energy <= criticalEnergy) then
+    if energy <= criticalEnergy then
         -- Enery low - need to charge first after all
         farmBot:report(Phrases.rechargeEnergyCritical)
         farmBot:goToCharge()
-    elseif (farmBot:perchesCount() <= perchLimit) then
+    elseif farmBot:perchesCount() <= perchLimit then
         -- Not enought perches
-        farmBot:report(Phrases.rechargePerches)
-        farmBot:goToCharge()
+        farmBot:composePerches(tasksUpdated)
     elseif nextTask ~= nil then
         -- Energy enought and bot have a tasks, so let's do next
         farmBot:reportTask(nextTask)
@@ -245,7 +249,7 @@ function farmBot:performNextAction(tasksUpdated)
 end
 
 function farmBot:perchesCount()
-    -- Regarding to spec, first 4 index for robot.count() should be related to belt slots. But game still return to me inventory slots.
+    -- Regarding to spec, first 4 index for robot.count() should be related to belt slots. But game still return to inventory slots instead.
     -- So uses this trick for check count of items in tool slot
     inventory.equip()
     local perchCount = robot.count()
@@ -267,6 +271,28 @@ function farmBot:goToWorkArea()
     navigator.cruiseHeight = farmBot.configuration.workHeight
     farmBot.outOfArea = false
     farmBot:performNextAction(false)
+end
+
+function farmBot:composePerches(tasksUpdated)
+    local perchesSlot = inventory:firstInternalSlotWhere("name", perchesStackName)
+    inventory.equip()
+
+    if perchesSlot ~= nil then
+        robot.select(perchesSlot)
+        robot.transferTo(1)
+        robot.select(1)
+    end
+
+    local needCharge = robot.count() <= perchLimit
+    inventory.equip()
+
+    if robot.count() <= perchLimit then
+        -- Not enought perches even after composing
+        farmBot:report(Phrases.rechargePerches)
+        farmBot:goToCharge()
+    else
+        farmBot:performNextAction(tasksUpdated)
+    end
 end
 
 function farmBot:handleTasksBroadcast(data) 
@@ -292,24 +318,29 @@ function farmBot:handleTasksBroadcast(data)
 end
 
 function farmBot:goToCharge()
-
     farmBot.outOfArea = true
 
     local charge = farmBot.configuration.charger
     navigator.cruiseHeight = farmBot.configuration.cruiseHeight
-    local perchesFace = Orientation:fromCode(charge.perchesFace)
-    local unloadingFace = Orientation:fromCode(charge.unloadingFace)
+    local face = Orientation:fromCode(charge.faceCode)
 
     navigator:goTo(charge.prePosition)
     navigator:rawGoTo(charge.position)
     inventory.dropIntoSlot(sides.down, 1)
-    navigator:faceTo(perchesFace)
+    navigator:faceTo(face)
 
-    while farmBot:perchesCount() < perchStack do
+    robot.select(1)
+    inventory.equip()
+    while robot.count() < perchStack do
+        local perchesRequest = perchStack - robot.count()
+        local perchesSlot = inventory:firstSlotWhere(sides.front, "name", perchesStackName)
+        if perchesSlot ~= nil then
+            inventory.suckFromSlot(sides.front, perchesSlot, perchesRequest)
+        end
         os.sleep(1)
     end
+    inventory.equip()
     
-    navigator:faceTo(unloadingFace)
     local slotIndex = 2 -- First slot reserved to switch with toll for check perches count
     while slotIndex <= robot.inventorySize() do
         robot.select(slotIndex)
@@ -317,16 +348,6 @@ function farmBot:goToCharge()
         slotIndex = slotIndex + 1
     end
     robot.select(1)
-
-    -- Some time system load perches into first slot until robot unloading
-    if robot.count(1) ~= 0 then
-        local emptyIndex = 2
-        -- For now will not handle situation, when all slots are busy even after unload
-        while robot.count(emptyIndex) ~= 0 do
-            emptyIndex = emptyIndex + 1
-        end
-        robot.transferTo(emptyIndex)
-    end
     inventory.suckFromSlot(sides.down, 1)
     
     navigator:rawGoTo(charge.postPosition)

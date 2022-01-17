@@ -83,7 +83,7 @@ function manager:printHeader(header, pattern, spacing)
 		return
 	end
 
-	local leftPatterFinish = (width - headerLength - spacing) / 2
+	local leftPatterFinish = math.floor((width - headerLength - spacing) / 2)
 	local rightPatternStart = leftPatterFinish + headerLength + 2 * spacing
 
 	local fullString = ""
@@ -101,7 +101,7 @@ function manager:printHeader(header, pattern, spacing)
 		fullString = fullString .. " "
 	end
 
-	for i = rightPatternStart, width do
+	for i = rightPatternStart, width - 1 do
 		fullString = fullString .. pattern
 	end
 
@@ -111,6 +111,23 @@ end
 function manager:cursorToBottom()
 	local _, height = gpu.getResolution()
 	term.setCursor(1, height)
+end
+
+function manager:showLinesCentered(lines, colors)
+	local width, height = gpu.getResolution()
+	local initialColor = gpu.getForeground()
+	
+	for index, line in ipairs(lines) do
+		if colors[index] ~= nil then
+			gpu.setForeground(colors[index])
+		end
+
+		local y = (height - #lines) / 2 + index - 1
+		local x = (width - unicode.len(line)) / 2
+		gpu.set(x, y, line)
+	end
+
+	gpu.setForeground(initialColor)
 end
 
 return manager

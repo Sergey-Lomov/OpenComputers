@@ -12,3 +12,15 @@ function Rect:new(x, y, width, height)
 
 	return rect
 end
+
+function Rect:getMaxX()
+	return self.x + self.width - 1
+end
+
+function Rect:getMaxY()
+	return self.y + self.height - 1
+end
+
+function Rect:contains(x, y)
+	return x >= self.x and y >= self.y and x <= self:getMaxX() and y <= self:getMaxY()
+end

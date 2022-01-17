@@ -33,3 +33,9 @@ function Drawer:drawBackRect(rect, color)
 	self.gpu.fill(rect.x + self.offset.x, rect.y + self.offset.y, rect.width, rect.height, " ")
 	self.gpu.setBackground(initialColor)
 end
+
+function Drawer:drawText(x, y, text, backColor, frontColor)
+	self.gpu.setBackground(backColor)
+	self.gpu.setForeground(frontColor)
+	self.gpu.set(x + self.offset.x, y + self.offset.y, text)
+end

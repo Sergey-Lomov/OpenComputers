@@ -24,6 +24,16 @@ function GuiScreen:new(gpu, background)
 	return screen
 end
 
+local function drawWithChilds(guiObject, drawer)
+	guiObject:drawBy(drawer)
+
+	drawer:increaseOffset(guiObject.frame.x, guiObject.frame.y)
+	for _, child in ipairs(guiObject.childs) do
+		drawWithChilds(child, drawer)
+	end
+	drawer:decreaseOffset(guiObject.frame.x, guiObject.frame.y)
+end
+
 function GuiScreen:render()
-	self:drawBy(self.drawer)
+	drawWithChilds(self, self.drawer)
 end

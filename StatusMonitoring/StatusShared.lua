@@ -3,7 +3,7 @@ StatusMessageType = {
     WARNING = 1,
     PROBLEM = 2,
     PING = 3,
-    CANCEL = 5
+    CANCEL = 4
 }
 
 statusSystemPort = 4361

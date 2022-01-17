@@ -18,8 +18,8 @@ function GuiEvent:new(type, handlingFunc)
 	local event = {}
 	setmetatable(event, self)
 	event.type = type
-	event.handlingFunc = handlingFunc
 	event.handled = false
+	event.handlingFunc = handlingFunc
 
 	return event
 end

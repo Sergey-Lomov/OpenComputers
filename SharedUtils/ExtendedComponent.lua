@@ -11,7 +11,7 @@ function component.shortProxy(shortId)
 end
 
 function component.safePrimary(type)
-	if next(component.list(type)) ~= nil then
+	if component.isAvailable(type) then
 		return component[type]
 	else
 		return nil

@@ -5,28 +5,30 @@ event = require("event")
 term = require("term")
 shared = require("shared")
 status = require("status_client")
+sides = require("sides")
 
-perchesFile = "perches" -- Contains ID and relative coords of all perches components
-kindsFile = "kinds" -- Contains level for getting seeds for all kind of plants
-weedKind = "weed"
+local perchesFile = "perches" -- Contains ID and relative coords of all perches components
+local kindsFile = "kinds" -- Contains level for getting seeds for all kind of plants
+local weedKind = "weed"
 
-broadcastRange = 16
-linesPerPerch = 3 -- How many lines uses to present info about perch at screen
-columnsPerPerch = 8 -- How many columns uses to present info about perch at screen
-updateTimerStep = 2
-uiUpdateRatio = 3 
-uiClearRatio = 5
-gainDisplacement = 0
-growthDisplacement = 3
-resistanceDisplacement = 6
-weedCriticalSize = 3
-weedProblemPostfix = "_weed"
+local broadcastRange = 16
+local linesPerPerch = 3 -- How many lines uses to present info about perch at screen
+local columnsPerPerch = 8 -- How many columns uses to present info about perch at screen
+local updateTimerStep = 2
+local uiUpdateRatio = 3 
+local uiClearRatio = 5
+local gainDisplacement = 3
+local growthDisplacement = 0
+local resistanceDisplacement = 6
+local weedCriticalSize = 3
+local weedProblemPostfix = "_weed"
+local prevent24Growth = false
 
 weedConfig = {
     destroy = true,
-    gain = 0,
-    growth = 0,
-    resistance = 0,
+    gain = {},
+    growth = {},
+    resistance = {},
     maxSize = 5
 }
 
@@ -35,6 +37,7 @@ Labels = {
     emptyKind = "  NONE  ",
     unsupportedKind = " UNSPEC ",
     missedPerch = " MISSED ",
+    exraGrowth = "EXT GR",
     
     destroyResolution = "Destroy",
     getResolution = "Harwest",
@@ -61,12 +64,13 @@ farmTasksManager = {
     
     initTermWidth = 0,
     initTermHeight = 0,
-    minX = 1000,
-    minZ = 1000,
-    maxX = -1000,
-    maxZ = -1000,
+    minX = 10000,
+    minZ = 10000,
+    maxX = -10000,
+    maxZ = -10000,
     xOffset = 0,
     yOffset = 0,
+    displaySide = sides.south, -- Pnly south and north supported for now
     
     updateTimerId = nil
 }
@@ -113,6 +117,23 @@ function farmTasksManager:formattedString(str)
     return result
 end
     
+function farmTasksManager:uiCoordForPosition(position)
+    local x = 0
+    local z = 0
+    local width = self.maxX - self.minX
+    local height = self.maxZ - self.minZ
+
+    if self.displaySide == sides.north then
+        x = (position.x - self.minX) * columnsPerPerch + 1
+        z = (position.z - self.minZ) * linesPerPerch + 1
+    elseif self.displaySide == sides.south then
+        x = (width - (position.x - self.minX)) * columnsPerPerch + 1
+        z = (height - (position.z - self.minZ)) * linesPerPerch + 1
+    end
+
+    return x, z
+end
+
 updatesCounter = 0
 function farmTasksManager:broadcastTasks()
     local perches = self:readPerches()
@@ -139,8 +160,7 @@ function farmTasksManager:broadcastTasks()
     
     self.tasks = {}
     for id, position in pairs(perches) do
-        local x = (position.x - self.minX) * columnsPerPerch + 1
-        local z = (position.z - self.minZ) * linesPerPerch + 1
+        local x, z = self:uiCoordForPosition(position)
         
         -- Clear view area
         gpu.fill(x, z, columnsPerPerch, linesPerPerch, " ")
@@ -161,6 +181,21 @@ function farmTasksManager:broadcastTasks()
         local resistance = crop.getResistance()
 
         destroy = false
+
+        if prevent24Growth and growth >= 24 then
+            gpu.setForeground(Colors.critical)
+            local kindLabel = farmTasksManager:formattedString(kind)
+            gpu.set(x, z, kindLabel)
+            local paramsLabel = tostring(gain) .. " " .. tostring(growth) .. " " .. tostring(resistance)
+            gpu.set(x, z + 1, paramsLabel)
+            local extraGrowthLabel = farmTasksManager:formattedString(Labels.exraGrowth)
+            gpu.set(x, z + 2, extraGrowthLabel) 
+            
+            local task = Task:new(nil, Works.DESTROY, position)
+            table.insert(self.tasks, task)
+            goto continue
+        end
+
         -- Handle kind
         if kind == weedKind then
             kindConfig = weedConfig
@@ -192,9 +227,22 @@ function farmTasksManager:broadcastTasks()
         end
         local kindLabel = farmTasksManager:formattedString(kind)
         gpu.set(x, z, kindLabel)
-        
+            
+        -- Handle growth
+        local minGrowth = kindConfig.growth.min or 0
+        local maxGrowth = kindConfig.growth.max or math.huge
+        if growth < minGrowth or growth > maxGrowth then
+            destroy = true
+            gpu.setForeground(Colors.critical)
+        else 
+            gpu.setForeground(Colors.growth)    
+        end
+        gpu.set(x + growthDisplacement, z + 1, tostring(growth))
+
         -- Handle gain
-        if gain < (kindConfig.gain or 0) then
+        local minGain = kindConfig.gain.min or 0
+        local maxGain = kindConfig.gain.max or math.huge
+        if gain < minGain or gain > maxGain then
             destroy = true
             gpu.setForeground(Colors.critical)
         else 
@@ -202,17 +250,10 @@ function farmTasksManager:broadcastTasks()
         end
         gpu.set(x + gainDisplacement, z + 1, tostring(gain))
         
-        -- Handle growth
-        if growth < (kindConfig.growth or 0) then
-            destroy = true
-            gpu.setForeground(Colors.critical)
-        else 
-            gpu.setForeground(Colors.growth)    
-        end
-        gpu.set(x + growthDisplacement, z + 1, tostring(growth))
-        
         -- Handle resistance
-        if resistance < (kindConfig.resistance or 0) then
+        local minResistance = kindConfig.resistance.min or 0
+        local maxResistance = kindConfig.resistance.max or math.huge
+        if resistance < minResistance or resistance > maxResistance then
             destroy = true
             gpu.setForeground(Colors.critical)
         else 
@@ -277,6 +318,7 @@ function farmTasksManager:start()
     
     local width = (self.maxX - self.minX + 1) * columnsPerPerch
     local height = (self.maxZ - self.minZ + 1) * linesPerPerch + 1
+    print(tostring(width) .. tostring(height))
     term.gpu().setResolution(width, height)
     term.setCursor(0, height)
       

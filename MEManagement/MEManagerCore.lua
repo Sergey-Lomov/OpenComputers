@@ -4,10 +4,10 @@ require 'items_config_fingerprint'
 local utils = require 'utils'
 local component = require 'extended_component'
 local status = require 'status_client'
-queue = require 'me_crafting_queue'
 
 local managerConfigFile = "meManagerConfig"
 local itemsConfigFile = "meItemsConfig"
+local unspecifiedSestroySide = "NONE"
 
 local StatusPostfix = {
 	amountProblem = "_amountProblem",
@@ -24,18 +24,21 @@ local Phrases = {
 	manyRecipes = "Найдено несколько рецептов для %s (NBT)",
 	noRecipe = "Не найден рецепт для %s",
 	extraHandling = "Не найден CPU для %s (%d мин)",
-	extraCrafting = "Создание %s длится уже %d мин"
+	extraCrafting = "Создание %s длится уже %d мин",
+	loadingItemMissed = "МЕ в состоянии загрузки. Работа приостановлена."
 }
 
 local manager = {
 	managerConfig = {},
 	itemsConfig = {},
+	queue = require 'me_crafting_queue',
 	managerConfigUpdated = false,
 	itemsConfigUpdated = false,
 	chest = nil,
 	interface = nil,
 	routineTimer = nil,
-	isDestroyConfigured = false
+	isDestroyConfigured = false,
+	problem = nil
 }
 
 local function chestStackToViev(stack)
@@ -49,9 +52,9 @@ local function chestStackToViev(stack)
 end
 
 function manager:updateManagerConfig()
-	self.managerConfig = utils:loadFrom(managerConfigFile)
+	self.managerConfig = utils:loadFrom(managerConfigFile, {loadingTestItem = ItemsConfigFingerprint})
 	self.managerConfigUpdated = true
-	queue.config = self.managerConfig.queue
+	self.queue.config = self.managerConfig.queue
 	return self:setupSystemElements()
 end
 
@@ -75,6 +78,11 @@ end
 function manager:chestItem(index)
 	local stack = self.chest.getStackInSlot(index)
 	return chestStackToViev(stack)
+end
+
+function manager:setLoadingTestItem(fingerprint)
+	self.managerConfig.loadingTestItem = fingerprint
+	utils:saveTo(managerConfigFile, self.managerConfig)
 end
 
 function manager:setItemConfig(fingerprint, config)
@@ -147,10 +155,12 @@ function manager:handleItemCraft(fingerprint, config, item)
 	local portion = config.craft.portion or math.huge
 	local totalAmount = config.craft.limit - amount
 	local requestAmount = math.min(portion, totalAmount)
-	queue:addRequest(fingerprint, requestAmount, totalAmount, config.craft.priority)
+	self.queue:addRequest(fingerprint, requestAmount, totalAmount, config.craft.priority)
 end
 
 function manager:routine()
+	self.problem = nil
+	
 	if not self.managerConfigUpdated then
 		self:stop()
 		self:start(false)
@@ -160,6 +170,18 @@ function manager:routine()
 		self:updateItemsConfig()
 	end
 
+	-- Check is ME network loaded (after chank unloading)
+	local testMEFingerprint = self.managerConfig.loadingTestItem:toMEFormat()
+	local testDetails = self.interface.getItemDetail(testMEFingerprint, false)
+	if testDetails == nil or testDetails.qty == 0 then
+		self.problem = Phrases.loadingItemMissed
+		return
+	end
+
+	if #self.queue:permittedCpus() == 0 then
+		return
+	end
+
 	for _, node in ipairs(self.itemsConfig) do
 		self:handleItem(node.fingerprint, node.config)
 	end
@@ -167,43 +189,43 @@ end
 
 function manager:configureQueueCallbacks()
 
-	queue.onHandlingExtratime = function(request)
+	self.queue.onHandlingExtratime = function(request)
 		local id = request.filter.name .. StatusPostfix.extraHandling
 		local duration = (utils:realWorldSeconds() - request.handlingTime) / 60
 		local message = string.format(Phrases.extraHandling, request.filter.label, duration)
 		status:sendWarning(id, message)
 	end
 
-	queue.onCraftingExtratime = function(request)
+	self.queue.onCraftingExtratime = function(request)
 		local id = request.filter.name .. StatusPostfix.extraCrafting
 		local duration = (utils:realWorldSeconds() - request.handlingTime) / 60
 		local message = string.format(Phrases.extraCrafting, request.filter.label, duration)
 		status:sendWarning(id, message)
 	end
 
-	queue.onCraftingStart = function(request)
+	self.queue.onCraftingStart = function(request)
 		local id = request.filter.name .. StatusPostfix.extraHandling
 		status:cancelStatus(id)
 	end
 
-	queue.onCraftingFinish = function(request)
+	self.queue.onCraftingFinish = function(request)
 		local id = request.filter.name .. StatusPostfix.extraCrafting
 		status:cancelStatus(id)
 	end
 
-	queue.onNBTRecipe = function(request)
+	self.queue.onNBTRecipe = function(request)
 		local id = request.filter.name .. StatusPostfix.manyRecipes
 		local message = string.format(Phrases.manyRecipes, request.filter.label)
 		status:sendProblem(id, message)
 	end
 
-	queue.onMissedRecipe = function(request)
+	self.queue.onMissedRecipe = function(request)
 		local id = request.filter.name .. StatusPostfix.noRecipe
 		local message = string.format(Phrases.noRecipe, request.filter.label)
 		status:sendProblem(id, message)
 	end
 
-	queue.onFoundRecipe = function(request)
+	self.queue.onFoundRecipe = function(request)
 		local nbtRecipesId = request.filter.name .. StatusPostfix.manyRecipes
 		local noRecipeId = request.filter.name .. StatusPostfix.noRecipe
 		status:cancelStatus(nbtRecipesId)
@@ -217,17 +239,19 @@ function manager:setupSystemElements()
 		utils:showError("Can't find ME interface")
 		return false
 	end
-	queue.interface = self.interface
+	self.queue.interface = self.interface
 
-	local validSides = {"UP", "DOWN", "NORTH", "SOUTH", "EAST", "WEST"}
+	local validSides = {"UP", "DOWN", "NORTH", "SOUTH", "EAST", "WEST", unspecifiedSestroySide}
 	local destroySide = self.managerConfig.destroySide or "[missed]"
 	if not table.containsValue(validSides, destroySide) then
-		utils:showError("Invalid destroy side: " .. destroySide)
+		utils:showError("Invalid destroy side: " .. destroySide .. ", you may use " .. unspecifiedSestroySide)
 		self.isDestroyConfigured = false
 		return false
 	end
 
-	if self.interface.canExport(destroySide) then
+	if destroySide == unspecifiedSestroySide then
+		self.isDestroyConfigured = false
+	elseif self.interface.canExport(destroySide) then
 		self.isDestroyConfigured = true
 	else
 		self.isDestroyConfigured = false
@@ -250,6 +274,11 @@ function manager:start(immideatelyIteration)
 		return false
 	end
 
+	if self.managerConfig.loadingTestItem == nil then
+		utils:showError("Loading test item not configured")
+		return false
+	end
+
 	local routine = function()
 		manager:routine()
 	end
@@ -259,7 +288,7 @@ function manager:start(immideatelyIteration)
 		routine()
 	end
 
-	queue:start()
+	self.queue:start()
 
 	return false
 end
@@ -270,7 +299,7 @@ function manager:stop()
 	end
 	self.routineTimer = nil
 
-	queue:stop()
+	self.queue:stop()
 end
 
 function manager:init()

@@ -1,7 +1,7 @@
 robot = require("robot")
 component = require("component")
 
-icExtender = {}
+local icExtender = {}
 
 local unloadWaiting = 3
 

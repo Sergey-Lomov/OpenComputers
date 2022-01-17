@@ -59,14 +59,35 @@ function GuiObject:drawBy(drawer)
 end
 
 -- Event handling
+
+-- Adapt event for child. Return nil if child should not handle this event. For example touch out of child frame.
+function GuiObject:eventForChild(event, child)
+	if event.type == GuiEventType.tap then
+		if not child.frame:contains(event.x, event.y) then return nil end
+
+		local x = event.x - child.frame.x
+		local y = event.y - child.frame.y
+		return TapEvent:new(x, y, event.button)
+	else
+		return event
+	end
+end
+
 function GuiObject:handleEvent(event)
-	if self[event.handlingFunc] ~= nil then
-		self[event.handlingFunc](event)
-		if event.handled then return end
+	for i = #self.childs, 1, -1 do
+		local child = self.childs[index]
+		local childEvent = self:eventForChild(event, child)
+		if childEvent ~= nil then
+			child:handleEvent(childEvent)
+			if childEvent.handled then
+				event.handled = true
+				return 
+			end
+		end
 	end
 
-	for _, child in ipairs(self.childs) do
-		child:handleEvent(event)
-		if event.handled then return end
+	if self[event.handlingFunc] ~= nil then
+		self[event.handlingFunc](self, event)
+		event.handled = true
 	end
 end
