@@ -100,6 +100,7 @@ end
 
 function manager:handleItem(fingerprint, config)
 	local item = self.interface.getItemDetail(fingerprint:toMEFormat(), false)
+	if item == nil then return end -- For case when item and craft was moved out from ME.
 
 	self:handleItemStatuses(fingerprint, config, item)
 	self:handleItemDestroy(fingerprint, config, item)
