@@ -130,7 +130,7 @@ end
 function sorter:start(width, height)
 	self.timer = event.timer(self.frequency, function() self:routine() end, math.huge)
 	if width ~= nil and height ~= nil then
-		ui:setScreenSize(screenWidth, screenHeight)
+		ui:setScreenSize(width, height)
 	end
 end
 
