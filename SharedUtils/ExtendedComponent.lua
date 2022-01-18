@@ -2,12 +2,12 @@ local component = require ("component")
 local utils = require ("utils")
 
 function component.shortProxy(shortId)
-	local id = self.get(shortId)
+	local id = component.get(shortId)
 	if id == nil then
 		utils:showError("Can't find full id for short: " .. shortId)
 		return nil
 	end
-	return self.proxy(id)
+	return component.proxy(id)
 end
 
 function component.safePrimary(type)
