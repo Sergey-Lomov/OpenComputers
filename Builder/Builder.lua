@@ -87,17 +87,18 @@ function builder:build(fromBottom, verify, fromPosition, faceCode)
 		self.navigator:faceTo(faceCode or 0)
 	end
 
-	self.navigator.x = 1
-	self.navigator.y = 0
-	self.navigator.z = self.schema.size.z
+	local start = {x = self.navigator.x, y = self.navigator.y, z = self.navigator.z}
 
 	local routine = function()
-		local placeY = self.navigator.y
-		if not fromBottom then
-			placeY = placeY + 2
+		local x = math.abs(self.navigator.x - start.x) + 1
+		local y = self.navigator.y - start.y
+		local z = self.schema.size.z - math.abs(self.navigator.z - start.z)
+
+		if fromBottom then
+			y = y + 2
 		end
 
-		local name = self:getNameInPoint(self.navigator.x, placeY, self.navigator.z)
+		local name = self:getNameInPoint(x, y, z)
 		if name == self.schema.emptyName then return end
 
 		local slot = self.inventory:firstInternalSlotWhere("name", name)
@@ -108,7 +109,7 @@ function builder:build(fromBottom, verify, fromPosition, faceCode)
 		end
 		robot.select(slot)
 
-		if fromBottom then
+		if not fromBottom then
 			robot.placeDown()
 		else
 			robot.placeUp()
@@ -116,13 +117,15 @@ function builder:build(fromBottom, verify, fromPosition, faceCode)
 	end
 
 	for yIterator = 1, #self.schema.layers do
-		local y = yIterator
-		if not fromBottom then
-			y = #self.schema.layers - yIterator - 1
+		local y = start.y + yIterator
+		if fromBottom then
+			y = start.y + #self.schema.layers - yIterator - 1
 		end
 
-		local from = {x = 1, y = y, z = self.schema.size.z}
-		local to = {x = self.schema.size.x, y = y, z = 1}
+		local maxX = start.x + self.schema.size.x - 1
+		local maxZ = start.z + self.schema.size.z - 1
+		local from = {x = start.x, y = y, z = maxZ}
+		local to = {x = maxX, y = y, z = start.z}
 		self.navigator:snakeFill(from, to, routine)
 	end
 end
