@@ -17,11 +17,11 @@ local builder = {
 
 -- Private methods
 
-function builder:getNameInPoint(x, y, z)
+function builder:getCodeInPoint(x, y, z)
 	local layer = self.schema.layers[y]
 	local line = layer[z]
 	local code = line:sub(x, x)
-	return builder.schema.codes[code]
+	return code
 end
 
 function builder:requiredResources()
@@ -98,22 +98,7 @@ function builder:build(fromBottom, verify, fromPosition, faceCode)
 			y = y + 2
 		end
 
-		local name = self:getNameInPoint(x, y, z)
-		if name == self.schema.emptyName then return end
-
-		local slot = self.inventory:firstInternalSlotWhere("name", name)
-		while slot == nil do
-			print("Need more " .. name)
-			os.sleep(1)
-			slot = self.inventory:firstInternalSlotWhere("name", name)
-		end
-		robot.select(slot)
-
-		if not fromBottom then
-			robot.placeDown()
-		else
-			robot.placeUp()
-		end
+		self:handlePosition(x, y, z)
 	end
 
 	for yIterator = 1, #self.schema.layers do
@@ -127,6 +112,49 @@ function builder:build(fromBottom, verify, fromPosition, faceCode)
 		local from = {x = start.x, y = y, z = maxZ}
 		local to = {x = maxX, y = y, z = start.z}
 		self.navigator:snakeFill(from, to, routine)
+	end
+end
+
+function builder:useUp()
+	self.inventory.equip()
+	os.sleep(0.05)
+	robot.useUp()
+	self.inventory.equip()
+end
+
+function builder:useDown()
+	self.inventory.equip()
+	os.sleep(0.05)
+	robot.useDown()
+	self.inventory.equip()
+end
+
+function builder:handlePosition(x, y, z, fromBottom)
+	local code = self:getCodeInPoint(x, y, z)
+	local name = builder.schema.codes[code]
+	if name == self.schema.emptyName then return end
+
+	local slot = self.inventory:firstInternalSlotWhere("name", name)
+	while slot == nil do
+		print("Need more " .. name)
+		os.sleep(1)
+		slot = self.inventory:firstInternalSlotWhere("name", name)
+	end
+	robot.select(slot)
+
+	local usable = self.schema.usable[code] or false
+	if not fromBottom then
+		if usable then
+			self:useDown()
+		else
+			robot.placeDown()
+		end
+	else
+		if usable then
+			self:useUp()
+		else
+			robot.placeUp()
+		end
 	end
 end
 

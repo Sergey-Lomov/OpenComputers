@@ -1,0 +1,28 @@
+{
+	emptyName = "none",
+	size = {x = 3, z = 3},
+	codes = {
+		[" "] = "none",
+		["S"] = "minecraft:stone",
+		["E"] = "minecraft:dirt",
+		["W"] = "minecraft:water_bucket",
+	},
+	usable = {"W" = true},
+	layers = {
+		[1] = {
+			[1] = "SES",
+			[2] = "E E",
+			[3] = "SES",
+		},
+		[2] = {
+			[1] = "S S",
+			[2] = "   ",
+			[3] = "S S",
+		},
+		[3] = {
+			[1] = "SSS",
+			[2] = "SWS",
+			[3] = "SSS",
+		},
+	}
+}
