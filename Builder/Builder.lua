@@ -12,7 +12,9 @@ local Errors = {
 local builder = {
 	navigator = require("navigator"),
 	inventory = component.inventory_controller,
-	schema = nil
+	schema = nil,
+	onPositionHandling = nil,
+	resourcesLoadingSide = sides.front
 }
 
 -- Private methods
@@ -142,7 +144,11 @@ function builder:handlePosition(x, y, z, fromBottom)
 	end
 	robot.select(slot)
 
-	local usable = self.schema.usable[code] or false
+	local usable = false 
+	if self.schema.usable ~= nil then
+		usable = self.schema.usable[code] or false
+	end
+	
 	if not fromBottom then
 		if usable then
 			self:useDown()
@@ -156,11 +162,27 @@ function builder:handlePosition(x, y, z, fromBottom)
 			robot.placeUp()
 		end
 	end
+
+	if self.onPositionHandling ~= nil then
+		self.onPositionHandling()
+	end
 end
 
 function builder:init()
 	icExtender:extend(self.inventory)
 	self.navigator:restoreState()
+end
+
+function builder:unloadResources()
+	for i = 1, robot.inventorySize(), 1 do
+		if robot.count(i) == 0 then goto continue end
+		local slot = self.inventory:firstEmptySlot(self.resourcesLoadingSide)
+		if slot ~= nil then
+			robot.select(i)
+			self.inventory.dropIntoSlot(self.resourcesLoadingSide, slot)
+		end
+		::continue::
+	end
 end
 
 function builder:loadResources(verbose)
@@ -171,9 +193,7 @@ function builder:loadResources(verbose)
 		return false, Errors.missedSchemeOnResourcesLoading
 	end
 
-	local side = sides.front
-
-	local inventorySize = self.inventory.getInventorySize(side)
+	local inventorySize = self.inventory.getInventorySize(self.resourcesLoadingSide)
 	if type(inventorySize) ~= "number" then
 		if verbose then print(Errors.missedResourcesBase) end
 		return false, Errors.missedResourcesBase
@@ -189,14 +209,14 @@ function builder:loadResources(verbose)
 	end
 
 	for i = 1, inventorySize, 1 do
-		local stack = self.inventory.getStackInSlot(side, i)
+		local stack = self.inventory.getStackInSlot(self.resourcesLoadingSide, i)
 		if stack == nil then goto continue end
 		
 		local required = resources[stack.name]
 		if required == nil or required == 0 then goto continue end
 
 		local suckSize = math.min(required, stack.size)
-		self.inventory.suckFromSlot(side, i, suckSize)
+		self.inventory.suckFromSlot(self.resourcesLoadingSide, i, suckSize)
 		resources[stack.name] = required - suckSize
 
 		::continue::

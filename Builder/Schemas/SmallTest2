@@ -4,25 +4,25 @@
 	codes = {
 		[" "] = "none",
 		["S"] = "minecraft:stone",
-		["E"] = "minecraft:dirt",
+		["D"] = "minecraft:dirt",
 		["W"] = "minecraft:water_bucket",
 	},
 	usable = {["W"] = true},
 	layers = {
 		[1] = {
-			[1] = "SES",
-			[2] = "E E",
-			[3] = "SES",
+			[1] = "DSD",
+			[2] = " S ",
+			[3] = "DSD",
 		},
 		[2] = {
-			[1] = "S S",
-			[2] = "   ",
-			[3] = "S S",
+			[1] = "   ",
+			[2] = " S ",
+			[3] = "   ",
 		},
 		[3] = {
-			[1] = "SSS",
-			[2] = "SWS",
-			[3] = "SSS",
+			[1] = " D ",
+			[2] = "DSD",
+			[3] = " D ",
 		},
 	}
 }

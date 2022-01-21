@@ -1,0 +1,38 @@
+{
+	supportPoint = {x=1409, z=-3349, y=34},
+	workAreaPoint = {x=1413, z=-3338, y=38},
+	recharging = {
+		pre = {x=1407, z=-3351, y=36},
+		point = {x=1407, z=-3351, y=38},
+		post = {x=1407, z=-3351, y=36},
+	},
+	loading = {
+		pre = {x=1413, z=-3348, y=33},
+		point = {x=1413, z=-3348, y=31},
+		post = {x=1413, z=-3348, y=33},
+		face = 0,
+	},
+	tasks = {
+		[1] = {
+			schema = 'test2',
+			position = {x=1419, z=-3337, y=31},
+			face = 2
+		},
+		[2] = {
+			position = {x=1412, z=-3337, y=31}
+		},
+		[3] = {
+			position = {x=1405, z=-3337, y=31}
+		},
+		[4] = {
+			schema = 'test',
+			position = {x=1426, z=-3337, y=31}
+		},
+		[5] = {
+			position = {x=1398, z=-3337, y=31}
+		},
+		[6] = {
+			position = {x=1412, z=-3344, y=31}
+		},
+	}
+}

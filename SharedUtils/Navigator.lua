@@ -268,6 +268,12 @@ function navigator:runRoute(route)
     end
 end
 
+function navigator:runRouteReverse(route)
+    for i = #route, 1, -1 do
+        self:rawGoTo(route[i])
+    end
+end
+
 navigator:init()
 
 return navigator
