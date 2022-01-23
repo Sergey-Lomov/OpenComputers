@@ -7,6 +7,15 @@ table.containsValue = function(tab, value)
 	return false
 end
 
+table.haveSuccess = function(tab, checker)
+	for _, currentValue in pairs(tab) do
+		if checker(currentValue) then
+			return true
+		end
+	end
+	return false
+end
+
 table.filtered = function(tab, func)
 	local result = {}
 	for key, value in pairs(tab) do

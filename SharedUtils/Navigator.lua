@@ -54,8 +54,7 @@ function navigator:moveByAxis (axis, to, lessFace, largeFace, routine)
     
     self:faceTo(targetFace)
     while self[axis] ~= to do
-        self:safeForward()
-        if routine ~= nil then routine() end
+        self:safeForward(routine)
     end
 end
 
@@ -67,25 +66,28 @@ function navigator:moveByZ(to, routine)
     self:moveByAxis("z", to, Orientation.south, Orientation.north, routine)
 end
 
-function navigator:safeUp()
+function navigator:safeUp(routine)
     if robot.up() then
         self.y = self.y + 1
         self:saveState()
+        if routine ~= nil then routine() end
     end
 end
 
-function navigator:safeDown()
+function navigator:safeDown(routine)
     if robot.down() then
         self.y = self.y - 1
         self:saveState()
+        if routine ~= nil then routine() end
     end
 end
     
-function navigator:safeForward()
+function navigator:safeForward(routine)
     if robot.forward() then
         self.x = self.x + self.face.x
         self.z = self.z + self.face.z
         self:saveState()
+        if routine ~= nil then routine() end
     end
 end
 
@@ -153,13 +155,11 @@ function navigator:rawGoTo(target, routine)
     -- Vertical movement
     if self.y < target.y then
         while self.y ~= target.y do
-            self:safeUp()
-            if routine ~= nil then routine() end
+            self:safeUp(routine)
         end 
     elseif self.y > target.y then
         while self.y ~= target.y do
-            self:safeDown()
-            if routine ~= nil then routine() end
+            self:safeDown(routine)
         end 
     end
     
