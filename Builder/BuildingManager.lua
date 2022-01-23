@@ -51,6 +51,7 @@ function manager:goToSupportArea()
 		navigator:goTo(self.job.workAreaPoint)
 		navigator:runRouteReverse(self.job.supportToWorkRoute)
 		navigator:goTo(self.job.supportPoint)
+		self.currentArea = Areas.SUPPORT
 	else
 		utils:showError(Phrases.toSupportFromUnknown)
 	end
@@ -63,6 +64,7 @@ function manager:goToWorkArea()
 		navigator:goTo(self.job.supportPoint)
 		navigator:runRoute(self.job.supportToWorkRoute)
 		navigator:goTo(self.job.workAreaPoint)
+		self.currentArea = Areas.WORK
 	else
 		utils:showError(Phrases.toWorkFromUnknown)
 	end
@@ -88,7 +90,7 @@ function manager:recharge()
 end
 
 function manager:updateResources(withLoading)
-	withLoading = withLoading or true
+	if withLoading == nil then withLoading = true end
 	local prePoint = self.job.loading.pre
 	if prePoint ~= nil then
 		navigator:goTo(prePoint)
@@ -229,6 +231,7 @@ end
 function manager:init()
 	local config = utils:loadFrom(configFile)
 	status.pingTitle = config.pingTitle
+	status:sendPing(true)
 
 	builder.onPositionHandling = function()
 		status:sendPing()
