@@ -20,10 +20,10 @@
 	["coffee"] = {destroy=false, maxSize=5, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
 	["venomilia"] = {destroy=false, maxSize=6, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
 	["cocoa"] = {destroy=false, maxSize=4, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
-	["ferru"] = {destroy=false, maxSize=4, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
+	["ferru"] = {destroy=true, maxSize=4, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
 	["aurelia"] = {destroy=true, maxSize=4, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
 	["shining"] = {destroy=true, maxSize=4, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
 	["plumbiscus"] = {destroy=true, maxSize=4, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
-	["stagnium"] = {destroy=true, maxSize=4, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
+	["stagnium"] = {destroy=false, maxSize=4, gain={min = 31}, growth={min = 31}, resistance={max = 0}},
 	["cyprium"] = {destroy=true, maxSize=4, gain={min = 30}, growth={min = 30}, resistance={max = 2}},
 }
