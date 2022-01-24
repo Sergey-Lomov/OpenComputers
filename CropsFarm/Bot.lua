@@ -376,7 +376,7 @@ function farmBot:executeTask(task)
     robot.swingDown() 
     os.sleep(1.5)
     
-    -- Some time between oild perches swing and new perches setting, eath became a grass. Robot should handle this scenario.
+    -- Some time between old perches swing and new perches setting, eath became a grass. Robot should handle this scenario.
     
     ::set_perches::
     _, result = robot.detectDown()
