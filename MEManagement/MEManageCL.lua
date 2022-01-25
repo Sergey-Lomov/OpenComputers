@@ -98,8 +98,14 @@ function managercl:addItem(index)
 	local addAutocraft = term.read():sub(1, -2)
 	if addAutocraft == "y" or addAutocraft == "Y" then
 		local craft = {}
+		::enter_craft_limit::
 		print("Enter item autocraft limit")
 		craft.limit = tonumber(term.read())
+		if craft.limit == nil then
+			print("Invalid input")
+			goto enter_craft_limit
+		end
+
 		print("Autocraft priority. 1(lower) is default")
 		craft.priority = tonumber(term.read()) or 1
 		print("Enter autocraft max portion (may be empty)")

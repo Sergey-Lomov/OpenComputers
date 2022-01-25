@@ -12,6 +12,7 @@ local unspecifiedSestroySide = "NONE"
 local StatusPostfix = {
 	amountProblem = "_amountProblem",
 	amountWarning = "_amountWarning",
+	noItemWarning = "_noItemWarning",
 	extraHandling = "_extraHandling",
 	extraCrafting = "_extraCrafting",
 	noRecipe = "_noRecipe",
@@ -21,6 +22,7 @@ local StatusPostfix = {
 local Phrases = {
 	problemItemLevel = "Критический уровень %s : %d",
 	warningItemLevel = "Низкий уровень %s : %d",
+	warningMissedItem = "Нет данных о ",
 	manyRecipes = "Найдено несколько рецептов для %s (NBT)",
 	noRecipe = "Не найден рецепт для %s",
 	extraHandling = "Не найден CPU для %s (%d мин)",
@@ -86,6 +88,8 @@ function manager:setLoadingTestItem(fingerprint)
 end
 
 function manager:setItemConfig(fingerprint, config)
+	if fingerprint == nil or config == nil then return end
+
 	local existNode = table.filteredByKeyValue(self.itemsConfig, "fingerprint", fingerprint)[1]
 	
 	if existNode ~= nil then
@@ -100,7 +104,16 @@ end
 
 function manager:handleItem(fingerprint, config)
 	local item = self.interface.getItemDetail(fingerprint:toMEFormat(), false)
-	if item == nil then return end -- For case when item and craft was moved out from ME.
+	
+	-- For case when item and craft was moved out from ME.
+	local missedItemId = fingerprint.id .. StatusPostfix.noItemWarning
+	if item == nil then 
+		local message = Phrases.warningMissedItem .. fingerprint.title
+		status:sendWarning(missedItemId, message)
+		return 
+	else
+		status:cancelStatus(missedItemId)
+	end
 
 	self:handleItemStatuses(fingerprint, config, item)
 	self:handleItemDestroy(fingerprint, config, item)
@@ -151,8 +164,9 @@ end
 function manager:handleItemCraft(fingerprint, config, item)
 	if config.craft == nil then return end
 	local amount = item.qty
+	local limit = config.craft.limit or 0
 
-	if amount >= config.craft.limit then return end
+	if amount >= limit then return end
 	local portion = config.craft.portion or math.huge
 	local totalAmount = config.craft.limit - amount
 	local requestAmount = math.min(portion, totalAmount)

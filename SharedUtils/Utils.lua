@@ -39,7 +39,7 @@ function utils:loadFrom(fileName, rawConverters)
         return {}
     end
 
-    local serialized = rawTextFrom(fileName) or "{}"
+    local serialized = self:rawTextFrom(fileName) or "{}"
     local result = serialization.unserialize(serialized)
     local converters = rawConverters or {}
     if next(converters) == nil then return result end
