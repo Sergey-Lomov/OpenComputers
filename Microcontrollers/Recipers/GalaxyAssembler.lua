@@ -4,28 +4,17 @@
 --local component = require 'component'
 --local serialization = require 'serialization'
 
-codes = {} codesMaxSize = {} fingerprints = {} recipes = {} outSides = {}
+codes = {} codesMaxSize = {} fingerprints = {} recipes = {} outSides = {0}
 
 transposer = component.proxy(component.list("transposer")())
 inSide = 1
-handleableSlots = 8 -- Due to optimisation. To avoid time-valuable check of empty slots. All unhandleable slots should be filled by some items to prevent using by interface.
-machineFirstIn = 1
-machineLastIn = 2
+handleableSlots = 9 -- Due to optimisation. To avoid time-valuable check of empty slots. All unhandleable slots should be filled by some items to prevent using by interface.
+machineFirstIn = 3
+machineLastIn = 11
 
 function setup()
 	requestData()
-
-	for side = 0, 5, 1 do
-		if side == inSide then goto continue end
-		
-		local inventorySize = transposer.getInventorySize(side)
-		if type(inventorySize) == "number" then
-			table.insert(outSides, side)
-		end
-		
-		::continue::
-	end
-
+	
 	for _, recipe in ipairs(recipes) do
 		recipe.require = {}
 		for _, item in ipairs(recipe.schema) do
@@ -42,7 +31,7 @@ function setup()
 end
 
 local port = 2327
-local dataId = "galaxy_assembler_recipes"
+local dataId = "galaxy_assembler_recipes_1"
 local modem = component.proxy(component.list("modem")())
 function requestData()
 	if modem == nil then computer.beep(900, 3) return end
@@ -53,7 +42,12 @@ function requestData()
 		local args = {computer.pullSignal(10)}
 
 		if args[1] == "modem_message" and args[4] == port then
-			codes, recipes = load(args[#args])()
+			local data = args[#args]
+			if data == nil or data == "" then 
+				computer.beep(1200, 3)
+				return
+			end
+			codes, recipes = load(data)()
 			computer.beep(300, 3)
 			modem.close(port)
 			return
@@ -178,11 +172,12 @@ function applyRecipeTransferToSide(recipe, side, times)
 	for index, item in ipairs(recipe.schema) do
 		local fingerprint = fingerprints[item.code]
 		local countLeft = times * item.count
+		local targetSlot = index + machineFirstIn - 1
 		while countLeft > 0 do
 			local sourceSlot = firstSlotByFingerprint(inSide, fingerprint)
 			local sourceCount = transposer.getSlotStackSize(inSide, sourceSlot)
 			local transferCount = math.min(sourceCount, countLeft)
-			local result = transposer.transferItem(inSide, side, transferCount, sourceSlot, index)
+			local result = transposer.transferItem(inSide, side, transferCount, sourceSlot, targetSlot)
 			if result then
 				countLeft = countLeft - transferCount
 			end
