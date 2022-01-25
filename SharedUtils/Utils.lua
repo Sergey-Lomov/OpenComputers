@@ -13,23 +13,33 @@ function utils:pr(e)
 	for k,v in pairs(e) do print(k,v) end
 end
 
+function utils:rawTextFrom(fileName)
+    if fileName == nil then
+        self:showError("rawTextFrom called with missed file name")
+        return {}
+    end
+
+    local file = io.open(fileName, "r")
+    if file ~= nil then
+        file:close()
+        local text = ""
+        for line in io.lines(fileName) do
+            text = text .. line
+        end
+
+        return text
+    end
+
+    return nil
+end
+
 function utils:loadFrom(fileName, rawConverters)
     if fileName == nil then
         self:showError("loafFrom called with missed file name")
         return {}
     end
 
-    local serialized = ""
-    local file = io.open(fileName, "r")
-    if file ~= nil then
-        file:close()
-        for line in io.lines(fileName) do
-            serialized = serialized .. line
-        end
-    else 
-        serialized = "{}"
-    end
-    
+    local serialized = rawTextFrom(fileName) or "{}"
     local result = serialization.unserialize(serialized)
     local converters = rawConverters or {}
     if next(converters) == nil then return result end
