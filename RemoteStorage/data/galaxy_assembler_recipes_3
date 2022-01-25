@@ -1,0 +1,29 @@
+codes = {
+	["GalacticraftCore:item.basicItem:8"] = "calum",
+	["GalaxySpace:item.CompressedPlates:3"] = "ccoal",
+	["GalacticraftCore:item.basicItem:10"] = "cbronze",
+	["ThermalFoundation:material:68"] = "nickel",
+	["GalacticraftCore:item.basicItem:9"] = "csteel",
+	["GalacticraftCore:item.steel_chestplate:0"] = "plate",
+	["minecraft:stained_glass_pane:1"] = "ogplate",
+	["minecraft:glass_pane:0"] = "gplate",
+	["GalacticraftCore:item.oxygenConcentrator:0"] = "ocon",
+	["GalaxySpace:item.CompressedPlates:4"] = "sdhd",
+	["GalaxySpace:item.BasicItems:0"] = "tank"
+}
+	
+recipes = {
+	[1] = {schema = {
+		{code = "sdhd", count = 1}, 
+		{code = "csteel", count = 1}, 
+		{code = "sdhd", count = 1}, 
+		{code = "csteel", count = 1}, 
+		{code = "nickel", count = 1}, 
+		{code = "csteel", count = 1}, 
+		{code = "csteel", count = 1}, 
+		{code = "nickel", count = 1}, 
+		{code = "csteel", count = 1}
+	}},
+}
+
+return codes, recipes
