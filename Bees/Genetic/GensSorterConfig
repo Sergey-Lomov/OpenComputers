@@ -2,5 +2,6 @@
 	recyclingSide = "UP",
 	analyzingSide = "DOWN",
 	inChestId = "2d12706d",
-	frequency = 10
+	frequency = 10,
+	statusStrength = 40
 }

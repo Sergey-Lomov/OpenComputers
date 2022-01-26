@@ -23,7 +23,6 @@ local crasher = {
 
 function crasher:waitBlocks()
 	robot.select(1)
-	local successId = computer.address() .. "_success"
 	status:sendPing()
 	while robot.count() == 0 do
 		os.sleep(waitingStep)
@@ -34,12 +33,8 @@ function crasher:waitBlocks()
 			self.sessionSize = robot.count()
 			local blockStack = inventory.getStackInInternalSlot(1)
 			self.sessionBlock = blockStack.label
-		else
-			status:sendSuccess(successId, config.successMessage)
 		end
 	end
-
-	status:cancelStatus(successId)
 end
 
 function crasher:suckFirstAvailableStack()

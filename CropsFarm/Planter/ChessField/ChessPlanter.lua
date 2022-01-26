@@ -20,13 +20,18 @@ local rechargeCheckLimit = 0.95
 local hoeLowLimit = 200
 local pingTitle = "Сеятель"
 local pingDelay = 90
-local missedSeedsIdPostfix = "_no_seeds"
 
 inventory = component.inventory_controller
 
+local StatusPostfix = {
+	missedSeeds = "_no_seeds",
+	jobDone = "_job_done",
+}
+
 local Phrases = {
 	missedJob = "Работа не загружена",
-	missedSeeds = "нехватает семян",
+	missedSeeds = "Нехватает семян",
+	jobDone = "Высевание завершено",
 }
 
 local planter = {
@@ -37,14 +42,12 @@ local planter = {
 function planter:goToService(isLast)
 	if isLast == nil then isLast = false end
 
-	navigator:runRoute(self.job.toServiceRoute)
-	if isLast then
-		local finalPoint = self.job.finalPosition
-		if finalPoint ~= nil then
-			navigator:goTo(finalPoint)
-		end
-		return
+	local servicePoint = self.job.toServiceRoute[#self.job.toServiceRoute]
+	if navigator.x ~= servicePoint.x or navigator.y ~= servicePoint.y or navigator.z ~= servicePoint.z then
+		navigator:runRoute(self.job.toServiceRoute)
 	end
+
+	if isLast then return end
 
 	navigator:faceTo(self.job.loadingFace)
 	status:sendPing()
@@ -86,7 +89,7 @@ function planter:goToService(isLast)
     
     if noSeeds then
     	local message = pingTitle .. ": " .. Phrases.missedSeeds
-    	local id = status.pingId .. missedSeedsIdPostfix
+    	local id = status.pingId .. StatusPostfix.missedSeeds
     	status:sendProblem(message)
     	utils:showError(Phrases.missedSeeds)
     	os.sleep(seedsCheckFrequency)
@@ -216,6 +219,8 @@ function planter:loadJob(jobFile)
 end
 
 function planter:startJob(serviceFirst)
+	status:sendPing(true)
+
 	if serviceFirst == nil then
 		serviceFirst = true
 	end
@@ -235,7 +240,17 @@ function planter:startJob(serviceFirst)
 		self:handleTask(task, index == #self.job.tasks)
 	end
 
-	navigator:runRoute(self.job.toServiceRoute)
+	local finalPoint = self.job.finalPosition
+	if finalPoint ~= nil then
+		navigator:goTo(finalPoint)
+	end
+
+	local statusMessage = pingTitle .. ": " .. Phrases.jobDone
+	local statusId = status.pingId .. StatusPostfix.jobDone
+
+	status:sendSuccess(statusId, statusMessage)
+	status:cancelPing()
+	computer.shutdown()
 end
 
 function planter:init()
@@ -245,7 +260,6 @@ function planter:init()
 	status.pingId = inventory.address
 	status.pingTitle = pingTitle
 	status.pingAllowableDelay = pingDelay
-	status:sendPing(true)
 end
 
 planter:init()

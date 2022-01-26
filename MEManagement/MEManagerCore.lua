@@ -8,6 +8,7 @@ local status = require 'status_client'
 local managerConfigFile = "meManagerConfig"
 local itemsConfigFile = "meItemsConfig"
 local unspecifiedSestroySide = "NONE"
+local statusHistoryPerItem = 2 -- Each item may produce problem or warning about amount and another one problem or warning about crafting state
 
 local StatusPostfix = {
 	amountProblem = "_amountProblem",
@@ -25,7 +26,7 @@ local Phrases = {
 	warningMissedItem = "Нет данных о ",
 	manyRecipes = "Найдено несколько рецептов для %s (NBT)",
 	noRecipe = "Не найден рецепт для %s",
-	extraHandling = "Не найден CPU для %s (%d мин)",
+	extraHandling = "Невозможно начать крафт %s (%d мин)",
 	extraCrafting = "Создание %s длится уже %d мин",
 	loadingItemMissed = "МЕ в состоянии загрузки. Работа приостановлена."
 }
@@ -57,13 +58,19 @@ function manager:updateManagerConfig()
 	self.managerConfig = utils:loadFrom(managerConfigFile, {loadingTestItem = ItemsConfigFingerprint})
 	self.managerConfigUpdated = true
 	self.queue.config = self.managerConfig.queue
+	
+	local modem = component.modem
+	if modem.isWireless() then
+		modem.setStrength(self.managerConfig.modemStrength)
+	end
+
 	return self:setupSystemElements()
 end
 
 function manager:updateItemsConfig()
 	self.itemsConfig = utils:loadFrom(itemsConfigFile, {fingerprint = ItemsConfigFingerprint})
 	self.itemsConfigUpdated = true
-	status.historyLimit = #self.itemsConfig * 2 -- Each item may produce problem or warning about amount and another one problem or warning about crafting state
+	status.historyLimit = #self.itemsConfig * statusHistoryPerItem 
 end
 
 function manager:chestItems()

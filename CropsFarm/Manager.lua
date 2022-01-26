@@ -294,7 +294,7 @@ function farmTasksManager:broadcastTasks()
     if criticalWeedDetected then
         status:sendProblem(weedIssueId, Labels.superWeedProblemMessage)
     else 
-        status:cancelStatus(weedIssueId)
+        status:cancelStatus(weedIssueId, false)
     end
 
     local serialized = serialization.serialize(self.tasks)

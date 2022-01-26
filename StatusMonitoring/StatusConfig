@@ -5,15 +5,9 @@
 	alarmRange = 120,
 	alertBlinkFrequency = 1,
 	successLambs = {
-		{id = "258cc12e-a55c-4dce-9057-777e12fe207c", side = 2},
-		{id = "c6a1ec29-55a6-4be1-a2fc-e681eb028003", side = 4}
 	},
 	warningLambs = {
-		{id = "475d0225-ab46-4f16-994b-1c8e28e08e53", side = 2},
-		{id = "c72f40da-5ee9-4fa0-a11c-b32ee883eead", side = 4}
 	},
 	problemLambs = {
-		{id = "13186c61-95e4-41a5-befd-99cb6485582f", side = 2},
-		{id = "c6392b87-a939-4285-a2b4-9cd728027242", side = 4}
 	}
 }

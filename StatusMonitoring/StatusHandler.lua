@@ -3,11 +3,11 @@ require("status_shared")
 require("red_out")
 
 local event = require("event")
-local component = require("extended_component")
 local computer = require("computer")
 local term = require("term")
 local serialization = require("serialization")
 local unicode = require("unicode")
+local component = require("extended_component")
 local ui = require("uimanager")
 
 local configFile = "statusConfig"
@@ -46,7 +46,8 @@ Phrases = {
 	warningsTitle = "Проблемы",
 	problemsTitle = "Критические проблемы",
     pingFailed = "Потеряна связь с ",
-    invalidPing = "Неверный пакет пинга: "
+    invalidPing = "Неверный пакет пинга: ",
+    alreadyStarted = "Менеджер уже запущен",
 }
 
 Colors = {
@@ -103,6 +104,12 @@ function statusHandler:handlePing(ping)
 	waiter.lastPing = computer.uptime()
 	self.problems[ping.id] = nil
 
+	self:saveState()
+end
+
+function statusHandler:cancelPing(id)
+	self.problems[id] = nil
+	self.pingWaiters[id] = nil
 	self:saveState()
 end
 
@@ -241,6 +248,8 @@ function statusHandler:handleModemEvent(...)
     if type == StatusMessageType.PING then
     	local payload = serialization.unserialize(data)
         self:handlePing(payload)
+    elseif type == StatusMessageType.CANCEL_PING then
+        self:cancelPing(data)
     elseif type == StatusMessageType.CANCEL then
         self:cancelStatus(data)
     elseif type == StatusMessageType.SUCCESS or type == StatusMessageType.WARNING or type == StatusMessageType.PROBLEM then
@@ -271,6 +280,11 @@ end
 -- Public methods
 
 function statusHandler:start()
+	if self.timer ~= nil then
+		utils:showError(Phrases.alreadyStarted)
+		return
+	end
+
 	self:loadConfig()
 
 	self:loadState()

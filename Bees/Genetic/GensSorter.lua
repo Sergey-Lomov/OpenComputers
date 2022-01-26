@@ -119,6 +119,8 @@ function sorter:init()
 	if self.chest == nil then
 		utils:showError(Phrases.missedChest)
 	end
+
+	status.statusStrength = config.statusStrength
 end
 
 function sorter:routine()

@@ -67,7 +67,7 @@ function client:sendProblem(id, message)
 end
 
 function client:cancelStatus(id, filterByHistory)
-	filterByHistory = filterByHistory or false
+	if filterByHistory == nil then filterByHistory = true end
 	if filterByHistory and self.history[id] == nil then return end
 
 	if self.modem == nil then return end
@@ -92,6 +92,12 @@ function client:sendPing(forced)
 
 	self:broadcast(StatusMessageType.PING, serialized)
 	self.lastPing = computer.uptime()
+end
+
+function client:cancelPing()
+	if self.modem == nil then return end
+	self:broadcast(StatusMessageType.CANCEL_PING, self.pingId)
+	self.lastPing = 0
 end
 
 client:init()
