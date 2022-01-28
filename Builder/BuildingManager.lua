@@ -25,7 +25,7 @@ local Phrases = {
 	missedTaskPosition = "Не указана позиция задачи #",
 	
 	notEnoughResources = "Недостаточно ресурсов для строительства",
-	jobDone = "Постройка %s выполнена",
+	jobDone = "Постройка выполнена",
 }
 
 Status = {
@@ -226,8 +226,7 @@ function manager:startJob()
 	self:updateResources(false)
 	
 	local robotTitle = status.pingTitle or Status.defaultTitle
-	local jobTitle = self.job.title or ""
-	local message = robotTitle .. ": " .. format(Phrases.jobDonestring, jobtitle)
+	local message = robotTitle .. ": " .. Phrases.jobDone
 	status:sendSuccess(Status.jobDoneId, message)
 	status:cancelPing()
 	computer.shutdown()
@@ -235,6 +234,7 @@ end
 
 function manager:init()
 	local config = utils:loadFrom(configFile)
+	status.pingId = inventory.address
 	status.pingTitle = config.pingTitle
 
 	builder.onPositionHandling = function()

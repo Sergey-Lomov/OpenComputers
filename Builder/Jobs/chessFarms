@@ -13,27 +13,23 @@
 	},
 	tasks = {
 		[1] = {
-			schema = 'tinChess',
-			position = {x=1442, z=-3326, y=240},
-			face = 2
+			schema = 'copperChess',
+			face = 2,
+			position = {x=1378, z=-3358, y=240},
 		},
 		[2] = {
-			position = {x=1442, z=-3342, y=240},
+			schema = 'ironChess',
+			position = {x=1378, z=-3342, y=240},
 		},
 		[3] = {
-			position = {x=1442, z=-3358, y=240},
+			position = {x=1378, z=-3326, y=240},
 		},
 		[4] = {
-			position = {x=1442, z=-3374, y=240},
+			position = {x=1394, z=-3326, y=240},
 		},
 		[5] = {
-			position = {x=1442, z=-3390, y=240},
-		},
-		[6] = {
-			position = {x=1426, z=-3390, y=240},
-		},
-		[7] = {
-			position = {x=1426, z=-3326, y=240},
+			schema = 'dirtChess',
+			position = {x=1410, z=-3326, y=240},
 		}
 	}
 }
