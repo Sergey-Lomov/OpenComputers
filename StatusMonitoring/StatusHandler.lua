@@ -208,17 +208,16 @@ function statusHandler:showStatuses()
 end
 
 function statusHandler:updateNotifiers()
-	-- Handle successes
 	local haveSuccesses = next(self.successes) ~= nil
-	RedOut.setStatusForAll(haveSuccesses, self.lambs.success)
-
-	-- Hande warnings
 	local haveWarnings = next(self.warnings) ~= nil
+	local haveProblems = next(self.problems) ~= nil
+
+	component.modem.broadcast(notifiersPort, haveSuccesses, haveWarnings, haveProblems)
+	
+	RedOut.setStatusForAll(haveSuccesses, self.lambs.success)
 	RedOut.setStatusForAll(haveWarnings, self.lambs.warning)
 
 	-- Handle problems
-	local haveProblems = next(self.problems) ~= nil
-
 	local alarm = self:getAlarm()
 	if alarm ~= nil then
 		local alarmFunc = haveProblems and alarm.activate or alarm.deactivate

@@ -8,3 +8,4 @@ StatusMessageType = {
 }
 
 statusSystemPort = 4361
+notifiersPort = 4362
