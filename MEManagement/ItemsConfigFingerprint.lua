@@ -20,6 +20,11 @@ function ItemsConfigFingerprint:toMEFormat()
 	}
 end
 
+function ItemsConfigFingerprint:toString()
+	return (self.id or "") .. ":" .. (self.damage or "") .. ":" .. (self.nbtHash or "") .. ":" .. (self.title or "")
+end
+
+
 function ItemsConfigFingerprint.fromRaw(raw)
 	local fingerprint = {}
 	fingerprint.id = raw.id

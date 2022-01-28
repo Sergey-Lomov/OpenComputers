@@ -28,7 +28,7 @@ local Phrases = {
 	noRecipe = "Не найден рецепт для %s",
 	extraHandling = "Невозможно начать крафт %s (%d мин)",
 	extraCrafting = "Создание %s длится уже %d мин",
-	loadingItemMissed = "МЕ в состоянии загрузки. Работа приостановлена."
+	loadingItemMissed = "МЕ в состоянии загрузки.\nРабота приостановлена."
 }
 
 local manager = {
@@ -41,7 +41,9 @@ local manager = {
 	interface = nil,
 	routineTimer = nil,
 	isDestroyConfigured = false,
-	problem = nil
+	problem = nil,
+	prevalues = {}, -- Previous amount of items
+	expectedItems = {} -- List of items, which prbably will be returned to ME. When user take stack of half of ctak to create pattern or put few into inventory.
 }
 
 local function chestStackToViev(stack)
@@ -109,18 +111,48 @@ function manager:setItemConfig(fingerprint, config)
 	utils:saveTo(itemsConfigFile, self.itemsConfig)
 end
 
+function manager:additoinalCasesCheck(item)
+	local prevalue = self.prevalues[stringFingerprint]
+	if prevalue == nil then return true end
+
+	-- Additional check for case when ME chunk was unloaded at middle of items handling
+	if prevalue ~= 0 and (item == nil or item.qty == 0) then
+		if not self:checkMEState() then return false end
+	end
+
+	-- Check for prevent recraft of items, when user take stack (or half, or all) to place few into inventory and return another.
+	local delta = prevalue - item.qty
+	local tapSize = math.min(prevalue, item.max_size)
+	local estimatedToReturn = delta == tapSize or delta == tapSize / 2
+	local isExpected = table.containsValue(self.expectedItems, stringFingerprint)
+
+	self.prevalues[stringFingerprint] = item.qty
+	if estimatedToReturn and not isExpected then
+		tabel.insert(self.expectedItems, stringFingerprint) 
+		return false
+	end
+
+	if isExpected then table.removeByValue(stringFingerprint) end
+
+	return true
+end
+
 function manager:handleItem(fingerprint, config)
 	local item = self.interface.getItemDetail(fingerprint:toMEFormat(), false)
+	local stringFingerprint = fingerprint:toString()
 	
 	-- For case when item and craft was moved out from ME.
 	local missedItemId = fingerprint.id .. StatusPostfix.noItemWarning
-	if item == nil then 
+	if item == nil then
+		utils:pr(fingerprint:toMEFormat()) 
 		local message = Phrases.warningMissedItem .. fingerprint.title
 		status:sendWarning(missedItemId, message)
 		return 
 	else
 		status:cancelStatus(missedItemId)
 	end
+
+	if not self:additoinalCasesCheck(item) then return end
 
 	self:handleItemStatuses(fingerprint, config, item)
 	self:handleItemDestroy(fingerprint, config, item)
@@ -180,6 +212,18 @@ function manager:handleItemCraft(fingerprint, config, item)
 	self.queue:addRequest(fingerprint, requestAmount, totalAmount, config.craft.priority)
 end
 
+-- Check is ME network loaded (after chank unloading)
+function manager:checkMEState()
+	local testMEFingerprint = self.managerConfig.loadingTestItem:toMEFormat()
+	local testDetails = self.interface.getItemDetail(testMEFingerprint, false)
+	if testDetails == nil or testDetails.qty == 0 then
+		self.problem = Phrases.loadingItemMissed
+		return false
+	end
+
+	return true
+end
+
 function manager:routine()
 	self.problem = nil
 	
@@ -192,13 +236,7 @@ function manager:routine()
 		self:updateItemsConfig()
 	end
 
-	-- Check is ME network loaded (after chank unloading)
-	local testMEFingerprint = self.managerConfig.loadingTestItem:toMEFormat()
-	local testDetails = self.interface.getItemDetail(testMEFingerprint, false)
-	if testDetails == nil or testDetails.qty == 0 then
-		self.problem = Phrases.loadingItemMissed
-		return
-	end
+	if not self:checkMEState() then return end
 
 	if #self.queue:permittedCpus() == 0 then
 		return
@@ -206,6 +244,7 @@ function manager:routine()
 
 	for _, node in ipairs(self.itemsConfig) do
 		self:handleItem(node.fingerprint, node.config)
+		if self.problem ~= nil then break end
 	end
 end
 
