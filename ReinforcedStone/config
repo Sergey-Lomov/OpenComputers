@@ -3,5 +3,8 @@
 	outSide = 1,
 	toolsSignalSide = 0,
 	toolsOutDelay = 5,
-	iterationsLimit = 80
+	iterationsLimit = 80,
+	statusStrength = 16,
+	pingTitle = "Каменщик",
+	pingAllowableDelay = 60,
 }
