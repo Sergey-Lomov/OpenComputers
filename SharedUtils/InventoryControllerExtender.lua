@@ -8,7 +8,7 @@ local unloadWaiting = 3
 function icExtender:extend(ic)
 
 	function ic:firstSlotWhere(side, key, value)
-		for i = 1, robot.inventorySize(), 1 do
+		for i = 1, ic.getInventorySize(side), 1 do
 			local stack = self.getStackInSlot(side, i)
 			if stack ~= nil then
 				if stack[key] == value then
