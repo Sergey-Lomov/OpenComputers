@@ -221,6 +221,10 @@ end
 function planter:startJob(serviceFirst)
 	status:sendPing(true)
 
+	local successMessage = pingTitle .. ": " .. Phrases.jobDone
+	local successId = status.pingId .. StatusPostfix.jobDone
+	status:cancelStatus(successId)
+
 	if serviceFirst == nil then
 		serviceFirst = true
 	end
@@ -245,10 +249,7 @@ function planter:startJob(serviceFirst)
 		navigator:goTo(finalPoint)
 	end
 
-	local statusMessage = pingTitle .. ": " .. Phrases.jobDone
-	local statusId = status.pingId .. StatusPostfix.jobDone
-
-	status:sendSuccess(statusId, statusMessage)
+	status:sendSuccess(successId, successMessage)
 	status:cancelPing()
 	computer.shutdown()
 end
