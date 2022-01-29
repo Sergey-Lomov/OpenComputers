@@ -25,7 +25,7 @@ local Phrases = {
 	missedTaskPosition = "Не указана позиция задачи #",
 	
 	notEnoughResources = "Недостаточно ресурсов для строительства",
-	jobDone = "Постройка выполнена",
+	jobDone = "Постройка завевршена",
 }
 
 Status = {
