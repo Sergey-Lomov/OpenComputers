@@ -111,9 +111,13 @@ function manager:setItemConfig(fingerprint, config)
 	utils:saveTo(itemsConfigFile, self.itemsConfig)
 end
 
-function manager:additoinalCasesCheck(item)
+function manager:additoinalCasesCheck(item, fingerprint)
+	local stringFingerprint = fingerprint:toString()
 	local prevalue = self.prevalues[stringFingerprint]
-	if prevalue == nil then return true end
+	if prevalue == nil then 
+		self.prevalues[stringFingerprint] = item.qty
+		return false 
+	end
 
 	-- Additional check for case when ME chunk was unloaded at middle of items handling
 	if prevalue ~= 0 and (item == nil or item.qty == 0) then
@@ -139,8 +143,7 @@ end
 
 function manager:handleItem(fingerprint, config)
 	local item = self.interface.getItemDetail(fingerprint:toMEFormat(), false)
-	local stringFingerprint = fingerprint:toString()
-	
+
 	-- For case when item and craft was moved out from ME.
 	local missedItemId = fingerprint.id .. StatusPostfix.noItemWarning
 	if item == nil then
@@ -152,7 +155,7 @@ function manager:handleItem(fingerprint, config)
 		status:cancelStatus(missedItemId)
 	end
 
-	if not self:additoinalCasesCheck(item) then return end
+	if not self:additoinalCasesCheck(item, fingerprint) then return end
 
 	self:handleItemStatuses(fingerprint, config, item)
 	self:handleItemDestroy(fingerprint, config, item)
