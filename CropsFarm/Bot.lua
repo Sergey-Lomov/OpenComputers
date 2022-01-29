@@ -325,9 +325,11 @@ function farmBot:goToCharge()
     local face = Orientation:fromCode(charge.faceCode)
 
     navigator:goTo(charge.prePosition)
+    status:sendPing()
     navigator:rawGoTo(charge.position)
     inventory.dropIntoSlot(sides.down, 1)
     navigator:faceTo(face)
+    status:sendPing()
 
     robot.select(1)
     inventory.equip()
@@ -341,11 +343,14 @@ function farmBot:goToCharge()
     end
     inventory.equip()
     
-    local slotIndex = 2 -- First slot reserved to switch with toll for check perches count
-    while slotIndex <= robot.inventorySize() do
+    -- First slot reserved to switch with toll for check perches count
+    for slotIndex = 2, robot.inventorySize() do
+        if robot.count(slotIndex) == 0 then goto continue end
+
         robot.select(slotIndex)
         inventory.dropIntoSlot(sides.front, slotIndex)
-        slotIndex = slotIndex + 1
+
+        ::continue::
     end
     robot.select(1)
     inventory.suckFromSlot(sides.down, 1)
