@@ -2,31 +2,46 @@
 
 --local computer = require 'computer'
 --local component = require 'component'
---local serialization = require 'serialization'
 
-codes = {} codesMaxSize = {} fingerprints = {} recipes = {} outSides = {}
+codes = {} 
+cms = {} -- Max stack sizes for code
+fps = {} -- Fingerprints
+rs = {} -- Recipes
+oss = {} -- Out sides
 
-transposer = component.proxy(component.list("transposer")())
-inSide = 1
-handleableSlots = 8 -- Due to optimisation. To avoid time-valuable check of empty slots. All unhandleable slots should be filled by some items to prevent using by interface.
-machineFirstIn = 1
-machineLastIn = 2
+tr = component.proxy(component.list("transposer")())
+m = component.proxy(component.list("modem")())
+m.setStrength(60)
+
+inSide = 2
+hss = 8 -- Handleable slots. Due to optimisation. To avoid time-valuable check of empty slots. All unhandleable slots should be filled by some items to prevent using by interface.
+fi = 1 -- Machine first in slot
+li = 2 -- Machine last in slot
+
+sp = 4361 -- Status system port
+pid = "induction_id" -- Ping id
+pt = "Инд. плавильни" -- Ping title
+crid = pid .. "_conflict_rec" -- Conflict recipes problem id
+irid = pid .. "_invalid_res" -- Invalid resource problem id
+
+dp = 2327 -- Data system port
+dataId = "induction_recipes"
 
 function setup()
-	requestData()
+	rDa()
 
 	for side = 0, 5, 1 do
 		if side == inSide then goto continue end
 		
-		local inventorySize = transposer.getInventorySize(side)
+		local inventorySize = tr.getInventorySize(side)
 		if type(inventorySize) == "number" then
-			table.insert(outSides, side)
+			table.insert(oss, side)
 		end
 		
 		::continue::
 	end
 
-	for _, recipe in ipairs(recipes) do
+	for _, recipe in ipairs(rs) do
 		recipe.require = {}
 		for _, item in ipairs(recipe.schema) do
 			recipe.require[item.code] = recipe.require[item.code] or {total = 0, max = 0}
@@ -37,39 +52,48 @@ function setup()
 	end
 
 	for fingerprint, code in pairs(codes) do
-		fingerprints[code] = fingerprint
+		fps[code] = fingerprint
 	end
 end
 
-local port = 2327
-local dataId = "galaxy_assembler"
-local modem = component.proxy(component.list("modem")())
-function requestData()
-	if modem == nil then computer.beep(900, 3) return end
-	modem.open(port)
+function sPr(id, message) -- Send problem
+	local data = string.format('{id="%s",message="%s"}', id, message)
+	m.broadcast(sp, 2, data)
+end
+
+lastPing = 0
+function sPi() -- Send ping
+	if computer.uptime() - lastPing < 15  then return end
+	local data = string.format('{id="%s",title="%s"}', pid, pt)
+	m.broadcast(sp, 3, data)
+	lastPing = computer.uptime()
+end
+
+function rDa() -- Request data
+	m.open(dp)
 
 	while true do
-		modem.broadcast(port, dataId)
+		m.broadcast(dp, dataId)
 		local args = {computer.pullSignal(10)}
 
-		if args[1] == "modem_message" and args[4] == port then
-			codes, recipes = load(args[#args])()
+		if args[1] == "modem_message" and args[4] == dp then
+			codes, rs = load(args[#args])()
 			computer.beep(300, 3)
-			modem.close(port)
+			m.close(dp)
 			return
 		end
 	end
 end
 
-function recipesValidation()
+function vRe() -- Validate recipes
 	local uses = {}
-	for _, recipe in ipairs(recipes) do
+	for _, recipe in ipairs(rs) do
 		for code, _ in pairs(recipe.require) do
 			uses[code] = (uses[code] or 0) + 1
 		end
 	end
 
-	for _, recipe in ipairs(recipes) do
+	for _, recipe in ipairs(rs) do
 		local multiuses = 0
 		for code, _ in pairs(recipe.require) do
 			if uses[code] > 1 then
@@ -78,15 +102,18 @@ function recipesValidation()
 		end
 
 		if multiuses > 1 then 
-			handleRecipesConflict()
-			return
+			sPr(crid, pt .. ": конфликт рецептов")
+			while true do
+				computer.beep(300, 1)
+				computer.pullSignal(0.5)
+			end
 		end
 	end
 end
 
-function firstSlotByFingerprint(side, value)
-	for i = 1, handleableSlots, 1 do
-		local stack = transposer.getStackInSlot(side, i)
+function fsbf(side, value) -- First slot by fingerprint
+	for i = 1, hss, 1 do
+		local stack = tr.getStackInSlot(side, i)
 		if stack ~= nil then
 			local fingerprint = stack.name .. ":" .. tostring(stack.damage)
 			if fingerprint == value then
@@ -97,18 +124,26 @@ function firstSlotByFingerprint(side, value)
 	return nil
 end
 
-function getCounts()
+function gCo() -- Get counts
 	local counts = {}
 
-	for index = 1, handleableSlots, 1 do
-		local stack = transposer.getStackInSlot(inSide, index)
+	for index = 1, hss, 1 do
+		local stack = tr.getStackInSlot(inSide, index)
 		if stack == nil then goto continue end
 
 		local fingerprint = stack.name .. ":" .. tostring(stack.damage)
 		local code = codes[fingerprint]
-		if code == nil then handleInvalidResource() return end
+		
+		if code == nil then 
+			sPr(irid, pt .. ": неизвестный ресурс")
+			while true do
+				computer.beep(600, 0.5)
+				computer.pullSignal(0.5)
+			end 
+		end
+
 		counts[code] = (counts[code] or 0) + stack.size
-		codesMaxSize[code] = stack.maxSize
+		cms[code] = stack.maxSize
 
 		::continue::
 	end
@@ -116,10 +151,10 @@ function getCounts()
 	return counts
 end
 
-function selectRecipe(counts)
+function sRe(counts) -- Select recipe
 	local resultRecipe = nil
 	local resultTimes = 0
-	for _, recipe in ipairs(recipes) do
+	for _, recipe in ipairs(rs) do
 		local recipeTimes = math.huge
 		for code, require in pairs(recipe.require) do
 			local codeCount = counts[code] or 0
@@ -133,7 +168,7 @@ function selectRecipe(counts)
 		if recipe.maxTimes == nil then
 			local maxTimes = math.huge
 			for code, require in pairs(recipe.require) do
-				local codeTimes = math.modf(codesMaxSize[code] / require.max)
+				local codeTimes = math.modf(cms[code] / require.max)
 				maxTimes = math.min(maxTimes, codeTimes)
 			end
 			recipe.maxTimes = maxTimes
@@ -149,10 +184,10 @@ function selectRecipe(counts)
 	return resultRecipe, resultTimes
 end
 
-function checkRecipeAtSide(recipe, side)
+function cras(recipe, side) -- Check recipe at side
 	local processingTimes = math.huge
-	for index = machineFirstIn, machineLastIn, 1 do
-		local stack = transposer.getStackInSlot(side, index)
+	for index = fi, li, 1 do
+		local stack = tr.getStackInSlot(side, index)
 		if stack == nil then 
 			processingTimes = 0
 			goto continue 
@@ -174,15 +209,16 @@ function checkRecipeAtSide(recipe, side)
 	return true, processingTimes
 end
 
-function applyRecipeTransferToSide(recipe, side, times)
+function artts(recipe, side, times) -- Aply recipe transfer t oside
 	for index, item in ipairs(recipe.schema) do
-		local fingerprint = fingerprints[item.code]
+		local fingerprint = fps[item.code]
 		local countLeft = times * item.count
 		while countLeft > 0 do
-			local sourceSlot = firstSlotByFingerprint(inSide, fingerprint)
-			local sourceCount = transposer.getSlotStackSize(inSide, sourceSlot)
+			sPi()
+			local sourceSlot = fsbf(inSide, fingerprint)
+			local sourceCount = tr.getSlotStackSize(inSide, sourceSlot)
 			local transferCount = math.min(sourceCount, countLeft)
-			local result = transposer.transferItem(inSide, side, transferCount, sourceSlot, index)
+			local result = tr.transferItem(inSide, side, transferCount, sourceSlot, index + si - 1)
 			if result then
 				countLeft = countLeft - transferCount
 			end
@@ -190,11 +226,11 @@ function applyRecipeTransferToSide(recipe, side, times)
 	end
 end
 
-function transferItems(recipe, times)
+function tIt(recipe, times) -- Transfefr items
 	local totalTimes = times
 	local validSides = {}
-	for _, side in ipairs(outSides) do
-		local available, processingTimes = checkRecipeAtSide(recipe, side)
+	for _, side in ipairs(oss) do
+		local available, processingTimes = cras(recipe, side)
 		if not available then goto continue end
 		local description = {side = side, times = processingTimes}
 		table.insert(validSides, description)
@@ -211,37 +247,30 @@ function transferItems(recipe, times)
 		local sideTimes = planedTimes - description.times
 		local roundedTimes = math.floor(sideTimes + roundCredit + 0.5)
 		roundCredit = sideTimes - roundedTimes
-		applyRecipeTransferToSide(recipe, description.side, roundedTimes)
-	end
-end
-
-function handleIteration()
-	local counts = getCounts()
-	local recipe, times = selectRecipe(counts)
-	if recipe == nil then return end
-	transferItems(recipe, times)
-end
-
-function handleInvalidResource()
-	-- Add status handling system call
-	while true do
-		computer.beep(600, 0.5) os.sleep(0.5)
-	end
-end
-
-function handleRecipesConflict()
-	while true do
-		computer.beep(300, 1) os.sleep(0.5)
+		artts(recipe, description.side, roundedTimes)
 	end
 end
 
 function start()
+	m.broadcast(sp, 4, crid)
+	m.broadcast(sp, 4, irid)
 	while true do
-		computer.pullSignal(0.5)
-		handleIteration()
+		local _, e = pcall( 
+			function()
+				while true do
+					computer.pullSignal(0.5)
+					sPi()
+					local counts = gCo()
+					local recipe, times = sRe(counts)
+					if recipe ~= nil then tIt(recipe, times) end
+				end
+			end
+		)
+		sPr(pid .. "_crash", pt .. ": креш\n" .. tostring(e))
+		computer.shutdown(true)
 	end
 end
 
 setup()
-recipesValidation()
+vRe()
 start()

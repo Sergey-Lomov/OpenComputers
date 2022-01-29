@@ -32,6 +32,7 @@ local statusHandler = {
 	screenHeight = 20,
 	alarmRange = 120,
 	alertBlinkFrequency = 1,
+	defaultAvailableDelay = 60,
 
 	lambs = {
 		success = {},
@@ -41,7 +42,7 @@ local statusHandler = {
 }
 
 Phrases = {
-	pingTitle = "Роботы",
+	pingTitle = "Роботы / Микроконтроллеры",
 	successesTitle = "Успехи",
 	warningsTitle = "Проблемы",
 	problemsTitle = "Критические проблемы",
@@ -87,7 +88,7 @@ function statusHandler:loadState()
 end
 
 function statusHandler:handlePing(ping)
-	if ping.id == nil or ping.title == nil or ping.allowableDelay == nil then
+	if ping.id == nil or ping.title == nil then
 		local serialized = serialization.serialize(ping)
 		self.problems[invalidPingId] = Phrases.invalidPing .. tostring(serialized)
 		return
@@ -100,7 +101,7 @@ function statusHandler:handlePing(ping)
 	end
 
 	waiter.title = ping.title
-	waiter.allowableDelay = ping.allowableDelay
+	waiter.allowableDelay = ping.allowableDelay or self.defaultAvailableDelay
 	waiter.lastPing = computer.uptime()
 	self.problems[ping.id] = nil
 
@@ -252,6 +253,7 @@ function statusHandler:handleModemEvent(...)
     elseif type == StatusMessageType.CANCEL then
         self:cancelStatus(data)
     elseif type == StatusMessageType.SUCCESS or type == StatusMessageType.WARNING or type == StatusMessageType.PROBLEM then
+    	data = string.gsub(data, "\n", " ")
     	local payload = serialization.unserialize(data)
         self:handleStatus(type, payload.id, payload.message)
     end
@@ -265,6 +267,7 @@ function statusHandler:loadConfig()
 	self.screenHeight = config.screenHeight
 	self.alarmRange = config.alarmRange
 	self.alertBlinkFrequency = config.alertBlinkFrequency
+	self.defaultAvailableDelay = config.defaultAvailableDelay or self.defaultAvailableDelay
 
 	self.lambs.success = RedOut:fromRawArray(config.successLambs)
 	self.lambs.warning = RedOut:fromRawArray(config.warningLambs)

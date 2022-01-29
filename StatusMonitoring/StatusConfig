@@ -4,6 +4,7 @@
 	screenHeight = 30,
 	alarmRange = 120,
 	alertBlinkFrequency = 1,
+	defaultAvailableDelay = 60,
 	successLambs = {
 	},
 	warningLambs = {
