@@ -18,7 +18,7 @@ local richEnergy = 0.8
 local idleTime = 5
 local perchStack = 64
 local perchLimit = 2 -- If robot have only 2 perch in active slot it should return to charger for get more
-local pingAllowableDelay = 60
+local pingAllowableDelay = 90
 local statusStrength = 24
 
 Commands = {
