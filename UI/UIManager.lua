@@ -130,4 +130,12 @@ function manager:showLinesCentered(lines, colors)
 	gpu.setForeground(initialColor)
 end
 
+function manager:readableSeconds(seconds)
+    local days = math.floor(time / 86400)
+    local hours = math.floor(math.fmod(time, 86400) / 3600)
+    local minutes = math.floor(math.fmod(time, 3600) / 60)
+    
+    return string.format("%d:%d:%d", days, hours, minutes)
+ end
+
 return manager
