@@ -132,11 +132,11 @@ function manager:additoinalCasesCheck(item, fingerprint)
 
 	self.prevalues[stringFingerprint] = item.qty
 	if estimatedToReturn and not isExpected then
-		tabel.insert(self.expectedItems, stringFingerprint) 
+		table.insert(self.expectedItems, stringFingerprint) 
 		return false
 	end
 
-	if isExpected then table.removeByValue(stringFingerprint) end
+	if isExpected then table.removeByValue(self.expectedItems, stringFingerprint) end
 
 	return true
 end
