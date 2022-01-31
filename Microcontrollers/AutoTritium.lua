@@ -1,5 +1,5 @@
-local component = require 'component'
-local computer = require 'computer'
+--local component = require 'component'
+--local computer = require 'computer'
 
 transposer = component.proxy(component.list("transposer")())
 modem = component.proxy(component.list("modem")())
@@ -23,9 +23,8 @@ providersSlots = {
 	["IC2:reactorUraniumDual:1"] = 9
 }
 
--- This table contains list of slots, which should be controlled. If list is nil, app will controll all slots
---controllSlots = {11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44}
-controllSlots = {1, 2, 3}
+-- This table contains list of slots, which should be controlled. If list is empty, app will controll all slots
+controllSlots = {}
 
 schema = {}
 
@@ -167,4 +166,4 @@ function start()
 end
 
 setup()
---start()
+start()
