@@ -32,7 +32,7 @@ local statusHandler = {
 	screenHeight = 20,
 	alarmRange = 120,
 	alertBlinkFrequency = 1,
-	defaultAvailableDelay = 60,
+	defaultAvailableDelay = 300,
 
 	lambs = {
 		success = {},
