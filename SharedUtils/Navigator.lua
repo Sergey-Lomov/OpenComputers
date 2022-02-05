@@ -262,15 +262,15 @@ function navigator:snakeFill(from, to, routine)
     end
 end
 
-function navigator:runRoute(route)
+function navigator:runRoute(route, routine)
     for i = 1, #route do
-        self:rawGoTo(route[i])
+        self:rawGoTo(route[i], routine)
     end
 end
 
-function navigator:runRouteReverse(route)
+function navigator:runRouteReverse(route, routine)
     for i = #route, 1, -1 do
-        self:rawGoTo(route[i])
+        self:rawGoTo(route[i], routine)
     end
 end
 
