@@ -30,12 +30,6 @@ function sendPing()
 	lastPing = computer.uptime()
 end
 
-if math.modf(computer.uptime() / 2) == 1 then
-	sendStatus(Status.PROBLEM, "micro_problem", "Micro-problem")
-else
-	modem.broadcast(statusPort, Status.CANCEL, "micro_problem")
-end
-
 while true do
 	computer.pullSignal(0.5)
 	sendPing()

@@ -21,7 +21,7 @@ local hoeLowLimit = 200
 local pingTitle = "Сеятель"
 local pingDelay = 90
 
-inventory = component.inventory_controller
+local inventory = component.inventory_controller
 
 local StatusPostfix = {
 	missedSeeds = "_no_seeds",
