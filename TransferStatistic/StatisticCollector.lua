@@ -5,7 +5,7 @@ modem = component.proxy(component.list("modem")())
 transposer = component.proxy(component.list("transposer")())
 
 frequency = 15
-timeGap = 5
+timeGap = 15
 handleableSlots = 12
 inSide = 1
 outSide = 0
@@ -13,12 +13,12 @@ outSide = 0
 statsPort = 5784
 registrationCode = 0
 statsCode = 1
-statsId = "stats_id"
-statsTitle = "Statistic title"
+statsId = "nuclear"
+statsTitle = "Реакторная"
 
 statusPort = 4361
-pingId = "top_garden_stats_id"
-pingTitle = "Верхние сады"
+pingId = "nuclear_stats_id"
+pingTitle = "Реакторная (стат)"
 pingCode = 3
 
 lastUpdate = 0
@@ -64,9 +64,9 @@ function transferItems()
 end
 
 function sendStats(stats)
-	local serialized = string.format("{id=%s, items={", statsId)
+	local serialized = string.format("{id=\"%s\", items={", statsId)
 	for label, amount in pairs(stats) do
-		local node = string.format("['%s']=%d,", label, amount)
+		local node = string.format("[\"%s\"]=%d,", label, amount)
 		serialized = serialized .. node
 	end
 	serialized = serialized .. "}}"

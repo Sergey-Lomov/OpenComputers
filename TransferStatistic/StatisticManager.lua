@@ -39,7 +39,7 @@ function manager:handleRegistration(data)
 		provider = {
 			items = {},
 			lastStatsUpdate = 0,
-			stableDuration = 0,
+			sessionDuration = 0,
 			registrationTime = utils:realWorldSeconds()
 		}
 		self.providers[data.id] = provider
@@ -47,6 +47,8 @@ function manager:handleRegistration(data)
 
 	provider.title = data.title
 	provider.maxDelay = data.maxDelay
+
+	utils:saveTo(statsFile, self.providers)
 end
 
 function manager:handleStats(data)
@@ -60,16 +62,18 @@ function manager:handleStats(data)
 	local delay = currentTime - provider.lastStatsUpdate
 	local isStableStream = delay <= provider.maxDelay
 	if isStableStream then
-		provider.stableDuration = item.stableDuration + delay
+		provider.sessionDuration = provider.sessionDuration + delay
 	end
 
-	for label, amount in data.items do
+	for label, amount in pairs(data.items) do
 		local item = provider.items[label] or {total = 0, stableTotal = 0}
 		item.total = item.total + amount
 
 		if isStableStream then
 			item.stableTotal = item.stableTotal + amount
 		end
+
+		provider.items[label] = item
 	end
 
 	provider.lastStatsUpdate = currentTime
@@ -77,14 +81,13 @@ function manager:handleStats(data)
 	utils:saveTo(statsFile, self.providers)
 end
 
-function manager:handleNetworkEvent(...)
+function manager:handleModemEvent(...)
 	local _, _, _, _, _, code, data = table.unpack { ... }
-	print("Recive message with code" .. tostring(code) .. " data: " .. data)
 
     if code == StatsMessageType.REGISTRATION then
     	local payload = serialization.unserialize(data)
         self:handleRegistration(payload)
-    elseif code == StatusMessageType.STATS then
+    elseif code == StatsMessageType.STATS then
     	local payload = serialization.unserialize(data)
     	self:handleStats(payload)
     end
@@ -99,8 +102,8 @@ function manager:start()
 		return false, Phrases.noModem 
 	end
 
-	event.listen("modem_message", handleModemEvent)
 	modem.open(statsPort)
+	event.listen("modem_message", handleModemEvent)
 end
 
 function manager:stop()

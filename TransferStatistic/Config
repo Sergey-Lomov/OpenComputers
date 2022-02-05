@@ -1,0 +1,29 @@
+{
+	width = 48,
+	height = 24,
+	col2X = 27,
+	col3X = 34,
+	col4X = 41,
+	carouselStepDuration = 30,
+	priorities = {
+		["item.Materia.name"] = 3,
+		["Iron Ingot"] = 2,
+		["Copper Ingot"] = 2,
+		["Tin Ingot"] = 2,
+		["item.SmallNeptunium.name"] = 2,
+		["Fuel Rod (Tritium)"] = 2,
+		["Wool"] = 2,
+		["Raw Rubber"] = 2,
+		["Green powder"] = 1,
+		["Oak Wood"] = 1,
+		["Rubber Wood"] = 1,
+		["Rubber Sapling"] = 1,
+		["Green powder"] = 1,
+	},
+	colors = {
+		[1] = 0x228822,
+		[2] = 0x44FF44,
+		[3] = 0x8F00FF,
+	},
+	filter = {}
+}

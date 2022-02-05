@@ -2,81 +2,176 @@ require 'utils'
 
 local term = require 'term'
 local event = require 'event'
+local unicode = require 'unicode'
+local keyboard = require 'keyboard'
 local ui = require 'uimanager'
 local core = require 'statistic_manager'
 
 local gpu = term.gpu()
-local perHourX = 25
-local totalX = 32
-local carouselStepDuration = 30
+local configFile = "config"
+
+local Modes = {
+	VALUABLE = 1,
+	CAROUSEL = 2,
+	LAST = 2
+}
 
 local Phrases = {
-	totalWorkTime = "Общее время работы:",
-	stableWorkTime = "Стабильный сбор данных: %d %s",
+	onboardTime = "Общее время в системе:",
+	sessionTime = "Текущая сессия статистики:",
 	itemsTitle = "Производство",
 	nameColTitle = "Название",
 	totalColTitle = "Всего",
+	perMinColTitle = "В мин.",
 	perHourColTitle = "В час",
-	noData = "Нет данных"
+	noData = "Нет данных",
+	moreItems = "...",
 }
 
 local Colors = {
 	title = 0xFFFFFF,
-	info = 0xDDDDDD
+	defaultInfo = 0xAAAAAA
 }
 
 local presenter = {
 	providers = {},
 	currentProvider = nil,
 	crouselStepTime = nil,
-	crouselPauseTime = nil
+	crouselPauseTime = nil,
+	mode = Modes.VALUABLE,
+
+	config = nil
 }
 
 function presenter:reloadData()
 	self.providers = {}
 	for id, provider in pairs(core.providers) do
-		local provider = {id = id, data = provider}
-		table.insert(self.providers, provider)
+		local providerView = {
+			id = id,
+			title = provider.title,
+			registrationTime = provider.registrationTime,
+			sessionDuration = provider.sessionDuration,
+			items = {},
+		}
+
+		for title, item in pairs(provider.items) do
+			local itemView = {
+				title = title,
+				total = item.total,
+				perMin = item.stableTotal * 60 / provider.sessionDuration,
+				perHour = item.stableTotal * 3600 / provider.sessionDuration,
+				priority = self.config.priorities[title] or 0
+			}
+			table.insert(providerView.items, itemView)
+		end
+
+		local comparator = function(i1, i2) 
+			if i1.priority ~= i2.priority then
+				return i1.priority > i2.priority
+			else
+				return unicode.lower(i1.title) < unicode.lower(i2.title) 
+			end
+		end
+		table.sort(providerView.items, comparator)
+		
+		table.insert(self.providers, providerView)
 	end
 end
 
 function presenter:showProvider(index, showIndex)
+	term.clear()
+
 	local provider = self.providers[index]
 	local title = provider.title
 	if showIndex then 
-		title = titel .. string.format(" %d/%d", index, #self.providers)
+		title = title .. string.format(" %d/%d", index, #self.providers)
 	end
 
 	ui:setTextColor(Colors.title)
 	ui:printHeader(title, "=")
 
-	ui:setTextColor(Colors.info)
-	local total = uitls:realWorldSeconds() - provider.data.registrationTime
-	local totalString = Phrases.totalWorkTime .. ui:secondsToDHM(totalWork)
-	local stableString = Phrases.stableWorkTime .. ui:secondsToDHM(provider.data.stableDuration)
-	print(totalString)
-	print(stableString)
+	local col2X = self.config.col2X
+	local col3X = self.config.col3X
+	local col4X = self.config.col4X
 
+	ui:setTextColor(Colors.defaultInfo)
+	local totalDuration = utils:realWorldSeconds() - provider.registrationTime
+	gpu.set(1, 2,  Phrases.onboardTime)
+	gpu.set(col3X, 2,  ui:secondsToDHM(totalDuration))
+	gpu.set(1, 3,  Phrases.sessionTime)
+	gpu.set(col3X, 3,  ui:secondsToDHM(provider.sessionDuration))
+
+	term.setCursor(1, 5)
 	ui:setTextColor(Colors.title)
 	ui:printHeader(Phrases.itemsTitle, "=")
 
-	gpu.set(0, 5, Phrases.nameColTitle)
-	gpu.set(totalX, y, Phrases.totalColTitle)
-	gpu.set(perHourX, y, Phrases.perHourColTitle)
+	gpu.set(1, 6, Phrases.nameColTitle)
+	gpu.set(col2X, 6, Phrases.perMinColTitle)
+	gpu.set(col3X, 6, Phrases.perHourColTitle)
+	gpu.set(col4X, 6, Phrases.totalColTitle)
 
-	local y = 6
-	for label, stats in pairs(provider.data.items) do
-		local totalString = ui:readableNumber(stats.total)
-		local perHourString = ui:readableNumber(stats.stableTotal / provider.data.stableDuration)
+	self:showItems(provider.items, 7, false)
 
-		gpu.set(0, y, label)
-		gpu.set(totalX, y, totalString)
-		gpu.set(perHourX, y, perHourString)
-		y = y + 1
-	end 
+	ui:cursorToBottom()
+	ui:restoreInitialTextColor()
 end
 
-function presenter:showNext()
+function presenter:showValuable()
+	term.clear()
+
+	local y = 1
+	for _, provider in pairs(self.providers) do
+		term.setCursor(1, y)
+		ui:setTextColor(Colors.title)
+		ui:printHeader(provider.title, "=")
+
+		y = self:showItems(provider.items, y + 1, true)
+		y = y + 1
+	end
+
+	ui:cursorToBottom()
+	ui:restoreInitialTextColor()
+end
+
+function presenter:showItems(items, y, onlyValuable)
+	for _, item in pairs(items) do
+		if onlyValuable and item.priority == 0 then goto continue end
+		
+		if y == self.config.height - 1 then
+			ui:setTextColor(color or Colors.defaultInfo)
+			gpu.set(1, y, Phrases.moreItems)
+			return y
+		end
+
+		local color = self.config.colors[item.priority] 
+		ui:setTextColor(color or Colors.defaultInfo)
+
+		gpu.set(1, y, item.title)
+		gpu.set(self.config.col2X, y, ui:readableNumber(item.perMin))
+		gpu.set(self.config.col3X, y, ui:readableNumber(item.perHour))
+		gpu.set(self.config.col4X, y, ui:readableNumber(item.total))
+		y = y + 1
+
+		::continue::
+	end
+
+	return y
+end
+
+function presenter:nextMode()
+	if self.mode == Modes.CAROUSEL then self:stopCarousel() end
+
+	if self.mode == Modes.LAST then
+		self.mode = 1
+	else
+		self.mode = self.mode + 1
+	end
+
+	if self.mode == Modes.CAROUSEL then self:startCarousel() end
+	self:updateView()
+end
+
+function presenter:nextProvider()
 	if #self.providers == 0 then
 		utils:showError(Phrases.noData)
 		return
@@ -90,7 +185,7 @@ function presenter:showNext()
 	self:showProvider(self.currentProvider, true)
 end
 
-function presenter:showPrev()
+function presenter:prevProvider()
 	if #self.providers == 0 then
 		utils:showError(Phrases.noData)
 		return
@@ -104,47 +199,44 @@ function presenter:showPrev()
 	self:showProvider(self.currentProvider, true)
 end
 
+function presenter:updateView()
+	if #self.providers == 0 then
+		utils:showError(Phrases.noData)
+		return
+	end
+
+	if self.mode == Modes.VALUABLE then
+		self:showValuable()
+	elseif self.mode == Modes.CAROUSEL then
+		self.currentProvider = self.currentProvider or 1
+		self:showProvider(self.currentProvider, true)
+	end
+end
+
 function presenter:startCarousel()
 	if self.carouselStepTimer ~= nil then
 		return
 	end
 
-	self:showNext()
-	self.carouselStepTimer = event.timer(carouselStepDuration, function() self:showNext() end, math.huge)
+	local duration = self.config.carouselStepDuration
+	self.carouselStepTimer = event.timer(duration, function() self:nextProvider() end, math.huge)
 end
 
 function presenter:stopCarousel()
 	if self.carouselStepTimer == nil then return end
 	event.cancel(self.carouselStepTimer)
+	self.carouselStepTimer = nil
 end
 
-local function handleKey(...)
-	local _,_,_, code = table.unpack { ... }
-
-	if code == 205 then
-		presenter:stopCarousel()
-		presenter:showNext()
-	elseif code == 203 then
-		presenter:stopCarousel()
-		presenter:showPrev()
-	elseif code == 57 then
-		if presenter.carouselStepTimer == nil then 
-			presenter:startCarousel()
-		else
-			presenter:stopCarousel()
-		end
-	end
-end
-
-function presenter:start(width, height)
-	if width ~= nil and height ~= nil then
-		ui:setScreenSize(width, height)
+function presenter:start()
+	if self.config.width ~= nil and self.config.height ~= nil then
+		ui:setScreenSize(self.config.width, self.config.height)
 	end
 
 	core:start()
 
-	event.listen("key_up", handleKey)
-	self:startCarousel()
+	self:reloadData()
+	self:updateView()
 end
 
 function presenter:stop()
@@ -154,17 +246,20 @@ function presenter:stop()
 
 	core:stop()
 
-	event.ignore("key_up", handleKey)
-	self:stopCarousel()
+	if self.carouselStepTimer ~= nil then
+		self:stopCarousel()
+	end
 end
 
 function presenter:init()
+	self.config = utils:loadFrom(configFile)
+	self.config.priorities = self.config.priorities or {}
+	self.config.colors = self.config.colors or {}
+
 	core.onUpdate = function()
 		self:reloadData()
-		self:showProvider(self.currentProvider, true)
+		self:updateView()
 	end
-
-	self:reloadData()
 end
 
 presenter:init()
