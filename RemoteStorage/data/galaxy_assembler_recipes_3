@@ -2,14 +2,24 @@ codes = {
 	["GalacticraftCore:item.basicItem:8"] = "calum",
 	["GalaxySpace:item.CompressedPlates:3"] = "ccoal",
 	["GalacticraftCore:item.basicItem:10"] = "cbronze",
-	["ThermalFoundation:material:68"] = "nickel",
 	["GalacticraftCore:item.basicItem:9"] = "csteel",
+	["GalaxySpace:item.CompressedPlates:0"] = "ccob",
+	["GalaxySpace:item.CompressedPlates:2"] = "cnic",
+	["GalaxySpace:item.CompressedPlates:1"] = "cmag",
+	["GalacticraftMars:item.itemBasicAsteroids:6"] = "ctit",
 	["GalacticraftCore:item.steel_chestplate:0"] = "plate",
 	["minecraft:stained_glass_pane:1"] = "ogplate",
+	["ThermalFoundation:material:68"] = "nickel",
 	["minecraft:glass_pane:0"] = "gplate",
 	["GalacticraftCore:item.oxygenConcentrator:0"] = "ocon",
 	["GalaxySpace:item.CompressedPlates:4"] = "sdhd",
-	["GalaxySpace:item.BasicItems:0"] = "tank"
+	["GalaxySpace:item.BasicItems:0"] = "tank",
+	["GalaxySpace:item.BasicItems:10"] = "ucry",
+	["GalaxySpace:item.BasicItems:4"] = "dol",
+	["GalacticraftCore:tile.gcBlockCore:12"] = "miblock",
+	["GalacticraftMars:item.itemBasicAsteroids:0"] = "hull3",
+	["GalaxySpace:item.HeavyDutyPlate:0"] = "hull4",
+	["GalaxySpace:item.HeavyDutyPlate:1"] = "hull5",
 }
 	
 recipes = {
@@ -23,6 +33,23 @@ recipes = {
 		{code = "csteel", count = 1}, 
 		{code = "nickel", count = 1}, 
 		{code = "csteel", count = 1}
+	}},
+	[2] = {schema = {
+		{code = "hull4", count = 1}, 
+		{code = "ccob", count = 1}, 
+		{code = "cnic", count = 1},
+		{code = "dol", count = 1},
+	}},
+	[3] = {schema = {
+		{code = "ctit", count = 1},
+		{code = "ctit", count = 1},
+		{code = "ctit", count = 1},
+		{code = "sdhd", count = 1}, 
+		{code = "sdhd", count = 1}, 
+		{code = "sdhd", count = 1},
+		{code = "miblock", count = 1},
+		{code = "miblock", count = 1},
+		{code = "miblock", count = 1},
 	}},
 }
 
