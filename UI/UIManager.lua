@@ -130,12 +130,24 @@ function manager:showLinesCentered(lines, colors)
 	gpu.setForeground(initialColor)
 end
 
-function manager:readableSeconds(seconds)
-    local days = math.floor(time / 86400)
-    local hours = math.floor(math.fmod(time, 86400) / 3600)
-    local minutes = math.floor(math.fmod(time, 3600) / 60)
+function manager:secondsToDHM(seconds)
+    local days = math.floor(seconds / 86400)
+    local hours = math.floor(math.fmod(seconds, 86400) / 3600)
+    local minutes = math.floor(math.fmod(seconds, 3600) / 60)
     
-    return string.format("%d:%d:%d", days, hours, minutes)
- end
+    return string.format("%dд. %dч. %dмин.", days, hours, minutes)
+end
+
+function manager:readableNumber(number)
+    if number >= 1000 then
+    	return self:readableNumber(number / 1000, size) .. "K"
+    elseif number >= 100 then
+    	return string.format("%d", number)
+    elseif number >= 10 then
+    	return string.format("%.1f", number)
+    else
+    	return string.format("%.2f", number)
+    end
+end
 
 return manager
