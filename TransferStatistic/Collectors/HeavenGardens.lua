@@ -13,12 +13,14 @@ outSide = 0
 statsPort = 5784
 registrationCode = 0
 statsCode = 1
-statsId = "cave_gardens"
-statsTitle = "Пещерные сады"
+statsId = "heaven_gardens"
+statsTitle = "Небесные сады"
+pointInterval = 180
+maxPoints = 60
 
 statusPort = 4361
-pingId = "cave_gardens_stats"
-pingTitle = "Пещерные сады (стат)"
+pingId = "heaven_gardens_stats"
+pingTitle = "Небесные сады"
 pingCode = 3
 
 lastUpdate = 0
@@ -38,7 +40,7 @@ end
 
 function registerStatProvider()
 	local maxDelay = math.max(frequency + timeGap, handleableSlots)
-	local meta = string.format("{id = \"%s\",  title = \"%s\", maxDelay = %d}", statsId, statsTitle, maxDelay, frequency)
+	local meta = string.format("{id = \"%s\",  title = \"%s\", maxDelay = %d, pointInterval = %d, maxPoints=%d}", statsId, statsTitle, maxDelay, pointInterval, maxPoints)
 	modem.broadcast(statsPort, registrationCode, meta)
 end
 

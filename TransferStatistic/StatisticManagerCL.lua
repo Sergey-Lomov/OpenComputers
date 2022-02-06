@@ -58,9 +58,9 @@ function presenter:reloadData()
 			local itemView = {
 				title = title,
 				total = item.total,
-				perMin = item.stableTotal * 60 / provider.sessionDuration,
-				perHour = item.stableTotal * 3600 / provider.sessionDuration,
-				priority = self.config.priorities[title] or 0
+				perMin = core:production(provider, title) * 60,
+				perHour = core:production(provider, title) * 3600,
+				priority = self.config.priorities[title] or 0,
 			}
 			table.insert(providerView.items, itemView)
 		end

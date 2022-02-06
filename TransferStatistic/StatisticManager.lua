@@ -1,4 +1,5 @@
 require 'utils'
+require 'extended_table'
 
 local component = require "component"
 
@@ -39,7 +40,10 @@ function manager:handleRegistration(data)
 		provider = {
 			items = {},
 			lastStatsUpdate = 0,
-			sessionDuration = 0,
+			stableDuration = 0,
+			points = {{time = 0, items={}}},
+			pointInterval = 60,
+			maxPoints = 60,
 			registrationTime = utils:realWorldSeconds()
 		}
 		self.providers[data.id] = provider
@@ -47,8 +51,31 @@ function manager:handleRegistration(data)
 
 	provider.title = data.title
 	provider.maxDelay = data.maxDelay
+	provider.maxDelay = data.maxPoints or provider.maxPoints
+	provider.pointInterval = data.pointInterval or provider.pointInterval
 
 	utils:saveTo(statsFile, self.providers)
+end
+
+function manager:production(provider, title)
+	local firstPoint = provider.points[1]
+	local lastPoint = provider.points[#provider.points]
+	local firstCount = firstPoint.items[title] or 0
+	local lastCount = lastPoint.items[title] or 0
+
+	return (lastCount - firstCount) / (lastPoint.time - firstPoint.time)
+end
+
+function manager:addPoint(provider)
+	local newPoint = {
+		time = provider.stableDuration,
+		items = table.mapByKey(provider.items, "stableTotal")
+	}
+
+	if #provider.points >= provider.maxPoints then
+		table.remove(provider.points, 1)
+	end
+	table.insert(provider.points, newPoint)
 end
 
 function manager:handleStats(data)
@@ -62,7 +89,11 @@ function manager:handleStats(data)
 	local delay = currentTime - provider.lastStatsUpdate
 	local isStableStream = delay <= provider.maxDelay
 	if isStableStream then
-		provider.sessionDuration = provider.sessionDuration + delay
+		provider.stableDuration = provider.stableDuration + delay
+		local lastTime = provider.points[#provider.points].time 
+		if provider.stableDuration - lastTime >= provider.pointInterval then
+			self:addPoint(provider)
+		end
 	end
 
 	for label, amount in pairs(data.items) do

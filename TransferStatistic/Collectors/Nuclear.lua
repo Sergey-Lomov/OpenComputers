@@ -15,10 +15,11 @@ registrationCode = 0
 statsCode = 1
 statsId = "nuclear"
 statsTitle = "Реакторная"
+pointInterval = 300
 
 statusPort = 4361
 pingId = "nuclear_stats_id"
-pingTitle = "Реакторная (стат)"
+pingTitle = "Реакторная"
 pingCode = 3
 
 lastUpdate = 0
@@ -38,7 +39,7 @@ end
 
 function registerStatProvider()
 	local maxDelay = math.max(frequency + timeGap, handleableSlots)
-	local meta = string.format("{id = \"%s\",  title = \"%s\", maxDelay = %d}", statsId, statsTitle, maxDelay, frequency)
+	local meta = string.format("{id = \"%s\",  title = \"%s\", maxDelay = %d, pointInterval = %d}", statsId, statsTitle, maxDelay, pointInterval)
 	modem.broadcast(statsPort, registrationCode, meta)
 end
 

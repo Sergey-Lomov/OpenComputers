@@ -53,3 +53,11 @@ table.removeByValue = function(tab, removedValue)
 		end
 	end
 end
+
+table.mapByKey = function(tab, mappingKey, defaultValue)
+	local result = {}
+	for key, value in pairs(tab) do
+		result[key] = value[mappingKey] or defaultValue
+	end
+	return result
+end
