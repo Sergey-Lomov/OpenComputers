@@ -61,3 +61,13 @@ table.mapByKey = function(tab, mappingKey, defaultValue)
 	end
 	return result
 end
+
+table.subtraction = function(tab1, tab2)
+	local result = {}
+	for index, value in ipairs(tab1) do
+		if not table.containsValue(tab2, value) then
+			result.insert(value)
+		end
+	end
+	return result
+end
