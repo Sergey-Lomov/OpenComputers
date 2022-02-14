@@ -13,6 +13,7 @@ function validate(fileName)
         for line in io.lines(fileName) do
             local result = validateLine(line)
             print(tostring(index) .. ": " .. tostring(result))
+            os.sleep(0)
             index = index + 1
         end
     end
