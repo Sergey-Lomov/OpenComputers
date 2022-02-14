@@ -1,4 +1,5 @@
 require 'utils'
+require 'extended_table'
 
 local term = require 'term'
 local event = require 'event'
@@ -6,6 +7,7 @@ local unicode = require 'unicode'
 local keyboard = require 'keyboard'
 local ui = require 'uimanager'
 local core = require 'statistic_manager'
+local localizer = require 'local_client'
 
 local gpu = term.gpu()
 local configFile = "config"
@@ -26,6 +28,7 @@ local Phrases = {
 	perHourColTitle = "В час",
 	noData = "Нет данных",
 	moreItems = "...",
+	loadingStub = "Переводится..."
 }
 
 local Colors = {
@@ -43,28 +46,26 @@ local presenter = {
 	config = nil
 }
 
-function presenter:reloadData()
-	self.providers = {}
-	for id, provider in pairs(core.providers) do
-		local providerView = {
-			id = id,
-			title = provider.title,
-			registrationTime = provider.registrationTime,
-			sessionDuration = provider.sessionDuration,
-			items = {},
-		}
-
-		for title, item in pairs(provider.items) do
-			local itemView = {
+function presenter:updateProviderView(providerView, provider)
+	local hasNew = false
+	for title, item in pairs(provider.items) do
+		local itemView = table.filteredByKeyValue(providerView.items, "title", title)[1]
+		
+		if itemView == nil then
+			itemView = {
 				title = title,
-				total = item.total,
-				perMin = core:production(provider, title) * 60,
-				perHour = core:production(provider, title) * 3600,
 				priority = self.config.priorities[title] or 0,
 			}
 			table.insert(providerView.items, itemView)
+			hasNew = true
 		end
 
+		itemView.total = item.total
+		itemView.perMin = core:production(provider, title) * 60
+		itemView.perHour = core:production(provider, title) * 3600
+	end
+
+	if hasNew then
 		local comparator = function(i1, i2) 
 			if i1.priority ~= i2.priority then
 				return i1.priority > i2.priority
@@ -73,9 +74,32 @@ function presenter:reloadData()
 			end
 		end
 		table.sort(providerView.items, comparator)
-		
-		table.insert(self.providers, providerView)
 	end
+end
+
+function presenter:reloadData()
+	if core.providers == nil then
+		utils:showError(Phrases.noData)
+		return false
+	end
+
+	for id, provider in pairs(core.providers) do
+		local providerView = table.filteredByKeyValue(self.providers, "id", id)[1]
+
+		if providerView == nil then
+			providerView = {
+				id = id,
+				title = provider.title,
+				registrationTime = provider.registrationTime,
+				sessionDuration = provider.sessionDuration,
+				items = {},
+			}
+			table.insert(self.providers, providerView)
+		end
+		self:updateProviderView(providerView, provider)
+	end
+
+	return true
 end
 
 function presenter:showProvider(index, showIndex)
@@ -119,7 +143,13 @@ end
 function presenter:showValuable()
 	term.clear()
 
-	local y = 1
+	ui:setTextColor(Colors.title)
+	gpu.set(1, 1, Phrases.itemsTitle)
+	gpu.set(self.config.col2X, 1, Phrases.perMinColTitle)
+	gpu.set(self.config.col3X, 1, Phrases.perHourColTitle)
+	gpu.set(self.config.col4X, 1, Phrases.totalColTitle)
+
+	local y = 3
 	for _, provider in pairs(self.providers) do
 		term.setCursor(1, y)
 		ui:setTextColor(Colors.title)
@@ -128,6 +158,10 @@ function presenter:showValuable()
 		y = self:showItems(provider.items, y + 1, true)
 		y = y + 1
 	end
+
+	term.setCursor(1, y + 2)
+	ui:setTextColor(Colors.title)
+	print("Free memory: " .. tostring(math.modf(computer.freeMemory() / 1000)) .. " / " .. tostring(math.modf(computer.totalMemory() / 1000)))
 
 	ui:cursorToBottom()
 	ui:restoreInitialTextColor()
@@ -146,7 +180,7 @@ function presenter:showItems(items, y, onlyValuable)
 		local color = self.config.colors[item.priority] 
 		ui:setTextColor(color or Colors.defaultInfo)
 
-		gpu.set(1, y, item.title)
+		gpu.set(1, y, localizer:localize(item.title))
 		gpu.set(self.config.col2X, y, ui:readableNumber(item.perMin))
 		gpu.set(self.config.col3X, y, ui:readableNumber(item.perHour))
 		gpu.set(self.config.col4X, y, ui:readableNumber(item.total))
@@ -235,8 +269,9 @@ function presenter:start()
 
 	core:start()
 
-	self:reloadData()
-	self:updateView()
+	if self:reloadData() then
+		self:updateView()
+	end
 end
 
 function presenter:stop()
@@ -256,9 +291,17 @@ function presenter:init()
 	self.config.priorities = self.config.priorities or {}
 	self.config.colors = self.config.colors or {}
 
+	localizer.onUpdate = self.updateView
+	localizer.loadingStub = Phrases.loadingStub
+
 	core.onUpdate = function()
-		self:reloadData()
-		self:updateView()
+		if self:reloadData() then
+			self:updateView()
+		end
+	end
+
+	core.onError = function(error)
+		utils:showError(error)
 	end
 end
 
