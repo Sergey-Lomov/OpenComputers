@@ -6,6 +6,7 @@ local component = require "component"
 local statsPort = 5784
 local configFile = "config"
 local statsFile = "stats"
+local dbUpdateFrequency = 60
 
 StatsMessageType = {
 	REGISTRATION = 0,
@@ -20,6 +21,7 @@ Phrases = {
 local manager = {
 	config = nil,
 	providers = {},
+	lastDBUpdate = 0,
 	onError = nil, -- Callback with one string parameter - error message
 	onUpdate = nil, -- Callback with no parameters
 }
@@ -54,7 +56,17 @@ function manager:handleRegistration(data)
 	provider.maxDelay = data.maxPoints or provider.maxPoints
 	provider.pointInterval = data.pointInterval or provider.pointInterval
 
-	utils:saveTo(statsFile, self.providers)
+	self:updateDB()
+end
+
+function manager:updateDB(forced)
+	if forced == nil then forced = false end
+
+	local timeToUpdate = utils:realWorldSeconds() - self.lastDBUpdate > dbUpdateFrequency
+	if timeToUpdate or forced then
+		self.lastDBUpdate = utils:realWorldSeconds()
+		utils:saveTo(statsFile, self.providers)
+	end
 end
 
 function manager:production(provider, title)
@@ -88,14 +100,7 @@ function manager:handleStats(data)
 	local currentTime = utils:realWorldSeconds()
 	local delay = currentTime - provider.lastStatsUpdate
 	local isStableStream = delay <= provider.maxDelay
-	if isStableStream then
-		provider.stableDuration = provider.stableDuration + delay
-		local lastTime = provider.points[#provider.points].time 
-		if provider.stableDuration - lastTime >= provider.pointInterval then
-			self:addPoint(provider)
-		end
-	end
-
+	
 	for label, amount in pairs(data.items) do
 		local item = provider.items[label] or {total = 0, stableTotal = 0}
 		item.total = item.total + amount
@@ -107,9 +112,16 @@ function manager:handleStats(data)
 		provider.items[label] = item
 	end
 
-	provider.lastStatsUpdate = currentTime
+	if isStableStream then
+		provider.stableDuration = provider.stableDuration + delay
+		local lastTime = provider.points[#provider.points].time 
+		if provider.stableDuration - lastTime >= provider.pointInterval then
+			self:addPoint(provider)
+		end
+	end
 
-	utils:saveTo(statsFile, self.providers)
+	provider.lastStatsUpdate = currentTime
+	self:updateDB()
 end
 
 function manager:handleModemEvent(...)
