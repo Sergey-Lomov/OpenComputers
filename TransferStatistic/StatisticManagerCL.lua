@@ -180,7 +180,9 @@ function presenter:showItems(items, y, onlyValuable)
 		local color = self.config.colors[item.priority] 
 		ui:setTextColor(color or Colors.defaultInfo)
 
-		gpu.set(1, y, localizer:localize(item.title))
+		local title = localizer:localize(item.title)
+		title = ui:removeControlMarks(title)
+		gpu.set(1, y, title)
 		gpu.set(self.config.col2X, y, ui:readableNumber(item.perMin))
 		gpu.set(self.config.col3X, y, ui:readableNumber(item.perHour))
 		gpu.set(self.config.col4X, y, ui:readableNumber(item.total))

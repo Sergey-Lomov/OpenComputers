@@ -150,4 +150,8 @@ function manager:readableNumber(number)
     end
 end
 
+function manager:removeControlMarks(string)
+    return string.gsub(string, "§.", "")
+end
+
 return manager
