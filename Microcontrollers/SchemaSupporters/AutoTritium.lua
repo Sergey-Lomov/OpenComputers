@@ -9,8 +9,8 @@ outSide = 1 -- Items provider inventory
 schemaSide = 0 -- Inventory which schema should be supported
 
 statusPort = 4361
-pingId = "autotritium1_id"
-pingTitle = "Авто-тритий"
+pingId = "nep1_id"
+pingTitle = "Нептуний 1"
 warningCode = 1
 problemCode = 2
 pingCode = 3
@@ -19,8 +19,8 @@ ativeStatuses = {}
 
 -- In this table may be specified slots, which should contains elements in item provider inventory. If slot fo element not specified, element will be searched in all slots.
 providersSlots = {
-	["IC2:reactorLithiumCell:1"] = 8,
-	["IC2:reactorUraniumDual:1"] = 9
+	["dwcity:ReactorNeptuniumDual:1"] = 8,
+	["dwcity:ReactorNeptuniumSimple:1"] = 9
 }
 
 -- This table contains list of slots, which should be controlled. If list is empty, app will controll all slots
