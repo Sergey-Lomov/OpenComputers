@@ -13,7 +13,7 @@ function utils:pr(e)
 	for k,v in pairs(e) do print(k,v) end
 end
 
-function utils:rawTextFrom(fileName)
+function utils:rawTextFrom(fileName, forceYelding)
     if fileName == nil then
         self:showError("rawTextFrom called with missed file name")
         return {}
@@ -24,6 +24,9 @@ function utils:rawTextFrom(fileName)
         file:close()
         local text = ""
         for line in io.lines(fileName) do
+            if forceYelding then
+                os.sleep(0)
+            end
             text = text .. line
         end
 
@@ -33,14 +36,18 @@ function utils:rawTextFrom(fileName)
     return nil
 end
 
-function utils:loadFrom(fileName, rawConverters)
+function utils:loadFrom(fileName, rawConverters, forceYelding)
     if fileName == nil then
         self:showError("loafFrom called with missed file name")
         return {}
     end
 
-    local serialized = self:rawTextFrom(fileName) or "{}"
+    if forceYelding == nil then forceYelding = false end
+
+    local serialized = self:rawTextFrom(fileName, forceYelding) or "{}"
     local result = serialization.unserialize(serialized)
+    if result == nil then return {} end
+
     local converters = rawConverters or {}
     if next(converters) == nil then return result end
 
@@ -122,5 +129,11 @@ function shortTraceback()
         level = level + 1
     end
 end
+
+function utils:memoryTest()
+    print("Free memory: " .. tostring(math.modf(computer.freeMemory() / 1000)) .. " / " .. tostring(math.modf(computer.totalMemory() / 1000)))
+end
+
+mt = function() utils:memoryTest() end
 
 return utils

@@ -16,22 +16,22 @@ local client = {
 }
 
 function client:requestLocalization(keys)
-	local keys = table.subtraction(keys, self.processingKeys)
+	local keys = table.subtractionArray(keys, self.processingKeys)
 	table.addAll(self.processingKeys, keys)
 
 	local serialized = serialization.serialize(keys)
 	modem.broadcast(localizationPort, serialized)
 end
 
-function client:localize(key, useRemote)
-	if useRemote == nil then useRemote = false end
+function client:localize(key, allowRemote)
+	if allowRemote == nil then allowRemote = true end
 
 	local localized = self.cached[key]
 	if localized ~= nil then
 		return localized
 	elseif table.containsValue(self.processingKeys, key) then
 		return self.loadingStub or key
-	elseif useRemote then
+	elseif allowRemote then
 		self:requestLocalization({[1] = key})
 	end
 
@@ -70,4 +70,6 @@ function client:init()
 end
 
 client:init()
+client:start()
+
 return client

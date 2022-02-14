@@ -1,17 +1,21 @@
 require 'utils'
+require 'extended_table'
 
 local component = require 'component'
 local event = require 'event'
 local uuid = require 'uuid'
+local status = require 'status_client'
 
 local modem = component.modem
 local localizationPort = 2654
 local dictPort = 2653
 local configFile = "config"
+local noLocalizationId = "no_local_"
 
 local Phrases = {
 	invalidRequest = "Неверный запрос: ",
 	invalidTaskId = "Получен ответ с незарегестрированым id задачи: ",
+	missedLocalization = "Нет перевода для: ",
 }
 
 local TaskStates = {
@@ -27,6 +31,15 @@ local service = {
 }
 
 function service:finishTask(task)
+	for _, key in ipairs(task.keys) do
+		if task.localized[key] == nil then
+			local id = noLocalizationId .. key
+			local message = Phrases.missedLocalization .. key
+			status:sendWarning(id, message)
+			task.localized[key] = key
+		end
+	end
+
 	local serialized = serialization.serialize(task.localized)
 	modem.send(task.requester, localizationPort, serialized)
 	table[task.id] = nil
