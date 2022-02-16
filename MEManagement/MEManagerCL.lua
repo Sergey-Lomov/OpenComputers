@@ -1,9 +1,11 @@
-require "items_config_fingerprint"
+require 'items_config_fingerprint'
 
-local core = require "me_manager_core"
-local unicode = require "unicode"
-local term = require "term"
-local ui = require("uimanager")
+local core = require 'me_manager_core'
+local unicode = require 'unicode'
+local term = require 'term'
+local ui = require 'uimanager'
+local localizer = require 'local_client'
+
 local gpu = term.gpu()
 
 Colors = {
@@ -34,11 +36,16 @@ local managercl = {
 	mode = Modes.showQueue
 }
 
+local function localize(string)
+	local localized = localizer:localize(string)
+	return ui:removeControlMarks(localized)
+end
+
 function managercl:selectChestItems()
 	local views = core:chestItems()
 	term.clear()
 	for index, view in ipairs(views) do
-		print(tostring(index) .. "\t" .. view.amount .. "\t" .. view.title)
+		print(tostring(index) .. "\t" .. view.amount .. "\t" .. localize(view.title))
 	end
 	print("Enter 0 to cancel item selection")
 	return tonumber(term.read())
@@ -131,7 +138,7 @@ function managercl:showRequests(title, list, fromY)
 		ui:setTextColor(color)
 
 		local currentY = fromY + index
-		gpu.set(1, currentY, request.filter.label) 
+		gpu.set(1, currentY, localize(request.filter.label))
 		gpu.set(priorityX, currentY, tostring(request.priority))
 		gpu.set(amountX, currentY, tostring(request.amount))
 	end

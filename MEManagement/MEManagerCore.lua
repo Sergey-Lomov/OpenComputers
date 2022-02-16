@@ -4,6 +4,7 @@ require 'items_config_fingerprint'
 local utils = require 'utils'
 local component = require 'extended_component'
 local status = require 'status_client'
+local localizer = require 'local_client'
 
 local managerConfigFile = "meManagerConfig"
 local itemsConfigFile = "meItemsConfig"
@@ -45,6 +46,11 @@ local manager = {
 	prevalues = {}, -- Previous amount of items
 	expectedItems = {} -- List of items, which prbably will be returned to ME. When user take stack of half of ctak to create pattern or put few into inventory.
 }
+
+local function localize(str)
+	local localized = localizer:localize(str)
+	return string.gsub(localized, "§.", "")
+end
 
 local function chestStackToViev(stack)
 	return {
@@ -109,6 +115,8 @@ function manager:setItemConfig(fingerprint, config)
 	end
 
 	utils:saveTo(itemsConfigFile, self.itemsConfig)
+
+	localizer:localize(fingerprint.title)
 end
 
 function manager:additoinalCasesCheck(item, fingerprint)
@@ -147,8 +155,7 @@ function manager:handleItem(fingerprint, config)
 	-- For case when item and craft was moved out from ME.
 	local missedItemId = fingerprint.id .. StatusPostfix.noItemWarning
 	if item == nil then
-		utils:pr(fingerprint:toMEFormat()) 
-		local message = Phrases.warningMissedItem .. fingerprint.title
+		local message = Phrases.warningMissedItem .. localize(fingerprint.title)
 		status:sendWarning(missedItemId, message)
 		return 
 	else
@@ -168,7 +175,7 @@ function manager:handleItemStatuses(fingerprint, config, item)
 	local problemLimit = config.problem or -1
 	local problemId = fingerprint.id .. StatusPostfix.amountProblem
 	if amount <= problemLimit then
-		local message = string.format(Phrases.problemItemLevel, item.display_name, amount)
+		local message = string.format(Phrases.problemItemLevel, localize(item.display_name), amount)
 		status:sendProblem(problemId, message)
 	else 
 		status:cancelStatus(problemId, true)
@@ -177,7 +184,7 @@ function manager:handleItemStatuses(fingerprint, config, item)
 	local warningLimit = config.warning or -1
 	local warningId = fingerprint.id .. StatusPostfix.amountWarning
 	if amount <= warningLimit and amount > problemLimit then
-		local message = string.format(Phrases.warningItemLevel, item.display_name, amount)
+		local message = string.format(Phrases.warningItemLevel, localize(item.display_name), amount)
 		status:sendWarning(warningId, message)
 	else 
 		status:cancelStatus(warningId, true)
@@ -331,6 +338,12 @@ function manager:setupSystemElements()
 	return true
 end
 
+function manager:updateLocalization()
+	local mapper = function(itemConfig) return itemConfig.fingerprint.title end
+	local titles = table.valuesByMapper(self.itemsConfig, mapper)
+	localizer:preload(titles)
+end
+
 function manager:start(immideatelyIteration)
 	immideatelyIteration = immideatelyIteration or true
 
@@ -342,6 +355,8 @@ function manager:start(immideatelyIteration)
 		utils:showError("Loading test item not configured")
 		return false
 	end
+
+	self:updateLocalization()
 
 	local routine = function()
 		manager:routine()

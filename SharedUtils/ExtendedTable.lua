@@ -1,3 +1,19 @@
+table.values = function(tab)
+	local result = {}
+	for _, value in pairs(tab) do
+		table.insert(result, value)
+	end
+	return result
+end
+
+table.keys = function(tab)
+	local result = {}
+	for key, _ in pairs(tab) do
+		table.insert(result, key)
+	end
+	return result
+end
+
 table.containsValue = function(tab, value)
 	for _, currentValue in pairs(tab) do
 		if value == currentValue then
@@ -62,6 +78,14 @@ table.mapByKey = function(tab, mappingKey, defaultValue)
 	return result
 end
 
+table.valuesByMapper = function(tab, mapper)
+	local result = {}
+	for _, value in pairs(tab) do
+		table.insert(result, mapper(value))
+	end
+	return result
+end
+
 -- Return array with all keys, which contains in tab1 but no contains in tab2
 table.missedKeys = function(tab1, tab2)
 	local result = {}
@@ -73,7 +97,7 @@ table.missedKeys = function(tab1, tab2)
 	return result
 end
 
--- Return array with value, which contains in tab1 but no contains in tab2
+-- Return array with value, which tab1 contains but tab2 not
 table.subtractionArray = function(tab1, tab2)
 	local result = {}
 	for _, value in ipairs(tab1) do

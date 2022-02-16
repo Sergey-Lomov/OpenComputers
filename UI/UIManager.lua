@@ -151,7 +151,8 @@ function manager:readableNumber(number)
 end
 
 function manager:removeControlMarks(string)
-    return string.gsub(string, "§.", "")
+    local result, _ = string.gsub(string, "§.", "")
+    return result
 end
 
 return manager
