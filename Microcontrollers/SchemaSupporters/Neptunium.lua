@@ -18,8 +18,8 @@ ass = {}			-- Active statuses
 -- In this table may be specified slots, which should contains elements in item provider inventory. 
 -- If slot for element not specified and 'upso' setted to false, element will be searched in all slots.
 providersSlots = {
-	["dwcity:ReactorNeptuniumDual:1"] = 8,
-	["dwcity:ReactorNeptuniumSimple:1"] = 9,
+	["dwcity:ReactorNeptuniumDual"] = 8,
+	["dwcity:ReactorNeptuniumSimple"] = 9,
 }
 upso = true  -- Search items only in slots specified in 'providersSlots'
 
@@ -89,13 +89,8 @@ function restoreElement(slot, name)
 		inSlot = firstSlotWhere(inSide, "name", name)
 	end
 
-	local problemId = pid .. "_noIn_" .. tostring(slot)
 	if inSlot == nil then 
-		local message = pt .. ": не доступен " .. name
-		sendStatus(prc, problemId, message)
 		return false
-	else
-		cancelStatus(problemId)
 	end
 
 	return t.transferItem(inSide, schemaSide, 1, inSlot, slot)

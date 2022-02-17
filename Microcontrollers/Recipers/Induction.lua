@@ -218,7 +218,7 @@ function artts(recipe, side, times) -- Aply recipe transfer t oside
 			local sourceSlot = fsbf(inSide, fingerprint)
 			local sourceCount = tr.getSlotStackSize(inSide, sourceSlot)
 			local transferCount = math.min(sourceCount, countLeft)
-			local result = tr.transferItem(inSide, side, transferCount, sourceSlot, index + si - 1)
+			local result = tr.transferItem(inSide, side, transferCount, sourceSlot, index + fi - 1)
 			if result then
 				countLeft = countLeft - transferCount
 			end
@@ -258,11 +258,15 @@ function start()
 		local _, e = pcall( 
 			function()
 				while true do
-					computer.pullSignal(0.5)
+					computer.pullSignal(1.5)
 					sPi()
 					local counts = gCo()
 					local recipe, times = sRe(counts)
-					if recipe ~= nil then tIt(recipe, times) end
+					if recipe ~= nil then 
+						tIt(recipe, times) 
+					else
+						computer.pullSignal(4)
+					end
 				end
 			end
 		)
