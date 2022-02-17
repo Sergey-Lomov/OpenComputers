@@ -1,66 +1,66 @@
---local component = require 'component'
---local computer = require 'computer'
-
-transposer = component.proxy(component.list("transposer")())
-modem = component.proxy(component.list("modem")())
+t = component.proxy(component.list("transposer")())
+m = component.proxy(component.list("modem")())
 
 inSide = 1 -- Items provider inventory
 outSide = 1 -- Items provider inventory
 schemaSide = 0 -- Inventory which schema should be supported
+frequency = 2.5
 
-statusPort = 4361
-pingId = "nep1_id"
-pingTitle = "Нептуний 1"
-warningCode = 1
-problemCode = 2
-pingCode = 3
-cancelCode = 4
-ativeStatuses = {}
+sp = 4361				-- Status port
+pid = "autotritium_id"	-- Ping id
+pt = "Авто-Тритий"		-- Ping title
+wc = 1					-- Warning code
+prc = 2 				-- Problem code
+pic = 3					-- Ping code
+cc = 4  				-- Cancel code
+ass = {}				-- Active statuses
 
--- In this table may be specified slots, which should contains elements in item provider inventory. If slot fo element not specified, element will be searched in all slots.
+-- In this table may be specified slots, which should contains elements in item provider inventory. 
+-- If slot for element not specified and 'upso' setted to false, element will be searched in all slots.
 providersSlots = {
-	["dwcity:ReactorNeptuniumDual:1"] = 8,
-	["dwcity:ReactorNeptuniumSimple:1"] = 9
+	["IC2:reactorUraniumSimple:1"] = 8,
+	["IC2:reactorLithiumCell:1"] = 9,
 }
+upso = true  -- Search items only in slots specified in 'providersSlots'
 
--- This table contains list of slots, which should be controlled. If list is empty, app will controll all slots
-controllSlots = {}
+updateStreams = {
+	{3,11,13,21,34,42,44,52},
+	{12,43}
+}
+streamsCarrets = {}
 
 schema = {}
 
 lastPing = 0
 function sendPing()
 	if computer.uptime() - lastPing < 15  then return end
-	local data = string.format('{id="%s",title="%s"}', pingId, pingTitle)
-	modem.broadcast(statusPort, pingCode, data)
+	local data = string.format('{id="%s",title="%s"}', pid, pt)
+	m.broadcast(sp, pic, data)
 	lastPing = computer.uptime()
 end
 
 function sendStatus(status, id, message)
 	local data = string.format('{id="%s",message="%s"}', id, message)
-	modem.broadcast(statusPort, status, data)
-	ativeStatuses[id] = true
+	m.broadcast(sp, status, data)
+	ass[id] = true
 end
 
 function cancelStatus(id)
-	if ativeStatuses[id] ~= nil then
-		modem.broadcast(statusPort, cancelCode, id)
-		ativeStatuses[id] = nil
+	if ass[id] ~= nil then
+		m.broadcast(sp, cc, id)
+		ass[id] = nil
 	end
 end
 
-function handleMoveoutImpossibility()
-end
-
 function firstSlotWhere(side, key, value)
-	local size = transposer.getInventorySize(side)
+	local size = t.getInventorySize(side)
 	if type(size) ~= "number" then
 		computer.beep(600, 0.5)
 		return nil
 	end
 
 	for i = 1, size, 1 do
-		local stack = transposer.getStackInSlot(side, i)
+		local stack = t.getStackInSlot(side, i)
 		if stack ~= nil then
 			if stack[key] == value then
 				return i
@@ -71,22 +71,12 @@ function firstSlotWhere(side, key, value)
 end
 
 function setup()
-	if #controllSlots == 0 then
-		local schemaSize = transposer.getInventorySize(schemaSide)
-		if type(schemaSize) ~= "number" then
-			computer.beep(400, 0.5)
-			return false
-		end
-
-		for i = 1, schemaSize, 1 do
-			table.insert(controllSlots, i)
-		end
-	end
-
-	for _, i in ipairs(controllSlots) do
-		local stack = transposer.getStackInSlot(schemaSide, i)
-		if stack ~= nil then
-			schema[i] = stack.name
+	for _, stream in ipairs(updateStreams) do
+		for _, slotIndex in ipairs(stream) do
+			local stack = t.getStackInSlot(schemaSide, slotIndex)
+			if stack ~= nil then
+				schema[slotIndex] = stack.name
+			end
 		end
 	end
 
@@ -95,73 +85,95 @@ end
 
 function restoreElement(slot, name)
 	local inSlot = providersSlots[name]
-	if inSlot == nil then
+	if inSlot == nil and not upso then
 		inSlot = firstSlotWhere(inSide, "name", name)
 	end
 
-	local problemId = pingId .. "_noIn_" .. tostring(slot)
+	local problemId = pid .. "_noIn_" .. tostring(slot)
 	if inSlot == nil then 
-		local message = pingTitle .. ": не доступен " .. name
-		sendStatus(problemCode, problemId, message)
+		local message = pt .. ": не доступен " .. name
+		sendStatus(prc, problemId, message)
 		return false
 	else
 		cancelStatus(problemId)
 	end
 
-	return transposer.transferItem(inSide, schemaSide, 1, inSlot, slot)
+	return t.transferItem(inSide, schemaSide, 1, inSlot, slot)
 end
 
 function moveOut(slot, stack)
-	local success = transposer.transferItem(schemaSide, outSide, stack.maxSize, slot)
+	local success = t.transferItem(schemaSide, outSide, stack.maxSize, slot)
 	
-	local warnId = pingId .. "_noOut_" .. slot
+	local warnId = pid .. "_noOut_" .. slot
 	if success then
 		cancelStatus(warnId)
 	else
-		local message = pingTitle .. ": не получается вывести " .. stack.label
-		sendStatus(warningCode, warnId, message)
+		local message = pt .. ": не получается вывести " .. stack.label
+		sendStatus(wc, warnId, message)
 	end
 
 	return success
 end
 
 function checkEmptiness(slot)
-	local stack = transposer.getStackInSlot(schemaSide, slot)
-	if stack == nil then return end
-	moveOut(slot, stack)
+	local stack = t.getStackInSlot(schemaSide, slot)
+	if stack == nil then 
+		return true, false
+	end
+	
+	local success = moveOut(slot, stack)
+	return success, success
 end
 
 function checkElement(slot, requiredName)
-	local stack = transposer.getStackInSlot(schemaSide, slot)
+	local stack = t.getStackInSlot(schemaSide, slot)
 	
 	if stack == nil then 
-		restoreElement(slot, requiredName)
-		return
+		local success = restoreElement(slot, requiredName)
+		return success, success
 	end
 
 	if stack.name ~= requiredName then
 		if moveOut(slot, stack) then
-			restoreElement(slot, requiredName)
+			local success = restoreElement(slot, requiredName)
+			return success, success
+		else
+			return false, false
 		end
 	end
+
+	return true, false
 end
 
-function checkSchema()
-	for _, i in ipairs(controllSlots) do
-		local requiredName = schema[i]
+function iterateStreams()
+	for streamIndex, stream in ipairs(updateStreams) do
+		local instreamIndex = streamsCarrets[streamIndex]
+		local slotIndex = stream[instreamIndex]
+		local requiredName = schema[slotIndex]
+		
+		local wasChanged = false
 		if requiredName == nil then
-			checkEmptiness(i)
+			_, wasChanged = checkEmptiness(slotIndex)
 		else
-			checkElement(i, requiredName)
+			_, wasChanged = checkElement(slotIndex, requiredName)
+		end
+
+		if wasChanged then
+			if instreamIndex == #stream then
+				streamsCarrets[streamIndex] = 1
+			else
+				streamsCarrets[streamIndex] = instreamIndex + 1
+			end
 		end
 	end
 end
 
 function start()
+	for i = 1, #updateStreams do streamsCarrets[i] = 1 end
 	while true do
-		computer.pullSignal(0.5)
+		computer.pullSignal(frequency)
 		sendPing()
-		checkSchema()
+		iterateStreams()
 	end
 end
 

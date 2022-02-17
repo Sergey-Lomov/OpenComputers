@@ -1,27 +1,29 @@
 t = component.proxy(component.list("transposer")())
 m = component.proxy(component.list("modem")())
 
-inSide = 1 -- Items provider inventory
-outSide = 1 -- Items provider inventory
-schemaSide = 0 -- Inventory which schema should be supported
+inSide = 0 -- Items provider inventory
+outSide = 0 -- Items provider inventory
+schemaSide = 1 -- Inventory which schema should be supported
 frequency = 2.5
 
-sp = 4361			-- Status port
-pid = "nep1_id"		-- Ping id
-pt = "Нептуний 1"	-- Ping title
-wc = 1				-- Warning code
-prc = 2 			-- Problem code
-pic = 3				-- Ping code
-cc = 4  			-- Cancel code
-ass = {}			-- Active statuses
+sp = 4361								-- Status port
+pid = "test1_id"						-- Ping id
+pt = "Тест потокового схем-саппортера"	-- Ping title
+wc = 1									-- Warning code
+prc = 2 								-- Problem code
+pic = 3									-- Ping code
+cc = 4  								-- Cancel code
+ass = {}								-- Active statuses
 
 -- In this table may be specified slots, which should contains elements in item provider inventory. 
 -- If slot for element not specified and 'upso' setted to false, element will be searched in all slots.
 providersSlots = {
 	["dwcity:ReactorNeptuniumDual:1"] = 8,
 	["dwcity:ReactorNeptuniumSimple:1"] = 9,
+	["minecraft:mossy_cobblestone"] = 8,
+	["appliedenergistics2:item.ItemMultiPart"] = 9,
 }
-upso = true  -- Search items only in slots specified in 'providersSlots'
+upso = true -- Search items only in slots specified in 'providersSlots'
 
 updateStreams = {
 	{1,5,7,9,11,13,17,21,23,25,29,33,35,37,39,41,43,45,49,53},
