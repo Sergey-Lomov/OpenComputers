@@ -1,5 +1,5 @@
 -- This manager is bridge between gui events system and OpenOS events system. Starts to listen events automatically.
-require 'GuiEvent'
+require 'ui/base/gui_event'
 local event = require 'event'
 
 EventsManager = {

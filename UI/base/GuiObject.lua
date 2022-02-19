@@ -1,5 +1,5 @@
-require 'ExtendedTable'
-require 'Rect'
+require 'extended_table'
+require 'ui/base/rect'
 
 GuiObject = {}
 GuiObject.__index = GuiObject
@@ -63,7 +63,9 @@ end
 -- Adapt event for child. Return nil if child should not handle this event. For example touch out of child frame.
 function GuiObject:eventForChild(event, child)
 	if event.type == GuiEventType.tap then
-		if not child.frame:contains(event.x, event.y) then return nil end
+		if not child.frame:contains(event.x, event.y) then 
+			return nil 
+		end
 
 		local x = event.x - child.frame.x
 		local y = event.y - child.frame.y
@@ -74,7 +76,7 @@ function GuiObject:eventForChild(event, child)
 end
 
 function GuiObject:handleEvent(event)
-	for i = #self.childs, 1, -1 do
+	for index = #self.childs, 1, -1 do
 		local child = self.childs[index]
 		local childEvent = self:eventForChild(event, child)
 		if childEvent ~= nil then

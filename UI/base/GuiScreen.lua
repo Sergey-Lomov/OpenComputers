@@ -1,7 +1,7 @@
 -- Screen is top level GuiObject
-require 'Drawer'
-require 'EventsManager'
-require 'GuiObject'
+require 'ui/base/drawer'
+require 'ui/base/events_manager'
+require 'ui/base/gui_object'
 
 GuiScreen = GuiObject:new()
 GuiScreen.__index = GuiScreen
@@ -24,16 +24,6 @@ function GuiScreen:new(gpu, background)
 	return screen
 end
 
-local function drawWithChilds(guiObject, drawer)
-	guiObject:drawBy(drawer)
-
-	drawer:increaseOffset(guiObject.frame.x, guiObject.frame.y)
-	for _, child in ipairs(guiObject.childs) do
-		drawWithChilds(child, drawer)
-	end
-	drawer:decreaseOffset(guiObject.frame.x, guiObject.frame.y)
-end
-
 function GuiScreen:render()
-	drawWithChilds(self, self.drawer)
+	self:drawBy(self.drawer)
 end

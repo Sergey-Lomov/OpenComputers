@@ -1,5 +1,5 @@
 Drawer = {
-	gpu = nil
+	gpu = nil,
 }
 Drawer.__index = Drawer
 

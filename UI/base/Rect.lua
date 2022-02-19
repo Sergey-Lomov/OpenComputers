@@ -24,3 +24,7 @@ end
 function Rect:contains(x, y)
 	return x >= self.x and y >= self.y and x <= self:getMaxX() and y <= self:getMaxY()
 end
+
+function Rect:__tostring()
+	return "<Rect x: " .. tostring(self.x) .. " y: " .. tostring(self.y) .. " w: " .. tostring(self.width) .. " h: " .. tostring(self.height) .. ">"
+end
