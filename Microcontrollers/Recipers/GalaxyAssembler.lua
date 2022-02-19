@@ -248,7 +248,7 @@ function start()
 		local _, e = pcall( 
 			function()
 				while true do
-					computer.pullSignal(0.5)
+					computer.pullSignal(1.5)
 					sPi()
 					local counts = gCo()
 					local recipe, times = sRe(counts)
