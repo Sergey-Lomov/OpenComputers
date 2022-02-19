@@ -183,11 +183,18 @@ function statusHandler:updateAndShowPingWaiters()
 	local comparator = function(s1, s2) return unicode.lower(s1.title) < unicode.lower(s2.title) end
 	table.sort(statuses, comparator)
 
-	for _, status in pairs(statuses) do
+	local width, _ = gpu.getResolution()
+	local col2X = width / 2
+	local _, initY = term.getCursor()
+	for index, status in pairs(statuses) do
 		local color = status.isFailed and Colors.pingFailed or Colors.pingSuccess
 		ui:setTextColor(color)
-		print(status.title)
+		local x = (index - 1) % 2 * col2X + 1
+		local y = (index - 1) / 2 + initY 
+		gpu.set(x, y, status.title)
 	end
+
+	term.setCursor(1, math.ceil(#statuses / 2) + initY)
 end
 
 function statusHandler:showStatusesFromTable(statusesTable, title, color)
