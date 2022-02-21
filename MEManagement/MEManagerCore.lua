@@ -263,14 +263,14 @@ function manager:configureQueueCallbacks()
 	self.queue.onHandlingExtratime = function(request)
 		local id = request.filter.name .. StatusPostfix.extraHandling
 		local duration = (utils:realWorldSeconds() - request.handlingTime) / 60
-		local message = string.format(Phrases.extraHandling, request.filter.label, duration)
+		local message = string.format(Phrases.extraHandling, localize(request.filter.label), duration)
 		status:sendWarning(id, message)
 	end
 
 	self.queue.onCraftingExtratime = function(request)
 		local id = request.filter.name .. StatusPostfix.extraCrafting
 		local duration = (utils:realWorldSeconds() - request.handlingTime) / 60
-		local message = string.format(Phrases.extraCrafting, request.filter.label, duration)
+		local message = string.format(Phrases.extraCrafting, localize(request.filter.label), duration)
 		status:sendWarning(id, message)
 	end
 

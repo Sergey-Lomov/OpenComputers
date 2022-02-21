@@ -1,8 +1,11 @@
 require 'extended_table'
-require 'ui/base/rect'
+require 'ui/utils/asserts'
+require 'ui/geometry/rect'
+require 'ui/base/border_engine'
 
 GuiObject = {}
 GuiObject.__index = GuiObject
+GuiObject.typeLabel = "GuiObject"
 
 -- Public
 
@@ -10,52 +13,128 @@ function GuiObject:new(frame, background)
 	local object = {}
 	setmetatable(object, self)
 
-	object.frame = frame or Rect:new()
+	object.frame = frame or Rect.zero
 	object.background = background
 	object.childs = {}
 	object.parent = nil
+	object.isOutBorderVisible = false
+	object.isInBorderVisible = false
+
+	object.inheritBorderStyle = true
+	object.borderEngine = BorderEngine:new(BorderStyle.default)
 
 	return object
 end
-
-function GuiObject:addChild(object)
-	table.insert(self.childs, object)
-	object.parent = self
-end
-
-function GuiObject:removeFromParent()
-	table.removeByValue(self.parent.childs, self)
-	self.parent = self
-end
---[[
-function GuiObject:pointToParentSpace(x, y, parent)
-	local resultX = 0
-	local resultY = 0
-
-	local current = self
-	repeat
-		resultX = resultX + current.frame.x
-		resultY = resultY + current.frame.y
-		current = current.parent
-		
-		if current == nil then
-			error("Try to convert point to coordinates space of unrelated object")
-		end
-	until current ~= parent
-
-	return {x = resultX, y = resultY}
-end]]--
 
 function GuiObject:drawBy(drawer)
 	if self.background ~= nil then
 		drawer:drawBackRect(self.frame, self.background)
 	end
 
-	drawer:increaseOffset(self.frame.x, self.frame.y)
+	drawer:increaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
+	self.borderEngine:drawBy(drawer, self.background)
+	
 	for _, child in ipairs(self.childs) do
 		child:drawBy(drawer)
 	end
-	drawer:decreaseOffset(self.frame.x, self.frame.y)
+	drawer:decreaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
+end
+
+function GuiObject:setFrame(rect)
+	typeAssert(rect, Rect, 1)
+	self.frame = rect
+	self:handleFrameUpdate()
+end
+
+function GuiObject:handleFrameUpdate()
+	self:updateInBorders()
+	self:updateOutBorders()
+end
+
+------- Hierarchy
+
+function GuiObject:addChild(child)
+	table.insert(self.childs, child)
+	child.parent = self
+	if child.inheritBorderStyle then
+		child.borderEngine.style = self.borderEngine.style
+	end
+end
+
+function GuiObject:removeFromParent()
+	table.removeByValue(self.parent.childs, self)
+	self.parent = self
+end
+
+function GuiObject:absoluteFrame()
+	local origin = self.frame.origin
+	if parent ~= nil then
+		origin.x = origin.x + parent:absoluteFrame().origin.x - 1
+		origin.y = origin.y + parent:absoluteFrame().origin.y - 1
+	end
+
+	return Rect:new(origin, self.frame.size)
+end
+
+------------------- Borders
+
+function GuiObject:setBorderStyle(style)
+	typeAssert(style, BorderStyle, 1)
+	self.borderEngine.style = style
+	for _, child in ipairs(self.childs) do
+		if child.inheritBorderStyle then child:setBorderStyle(style) end
+	end
+end
+
+local function addBordersRect(engine, x1, y1, x2, y2)
+	engine:addLineCoords(x1, y1, x2, y1)
+	engine:addLineCoords(x2, y1, x2, y2)
+	engine:addLineCoords(x2, y2, x1, y2)
+	engine:addLineCoords(x1, y2, x1, y1)
+end
+
+function GuiObject:addOutBordersToParent()
+	if self.isOutBorderVisible and self.parent ~= nil then
+		local frame = self:absoluteFrame()
+		addBordersRect(self.parent.borderEngine, frame:minX() - 1, frame:minY() - 1, frame:maxX() + 1, frame:maxY() + 1)
+	end
+end
+
+function GuiObject:updateOutBorders()
+	if self.isOutBorderVisible and self.parent ~= nil then
+		self.parent:updateInBorders()
+	end
+end
+
+function GuiObject:updateInBorders()
+	self.borderEngine:clear()
+	if self.isInBorderVisible then
+		addBordersRect(self.borderEngine, 1, 1, self.frame.size.width, self.frame.size.height)
+	end
+
+	for _, child in ipairs(self.childs) do
+		child:addOutBordersToParent()
+	end
+end
+
+function GuiObject:hideOutBorders()
+	self.isOutBorderVisible = true
+	if self.parent ~= nil then self.parent:updateInBorders() end
+end
+
+function GuiObject:showOutBorders()
+	self.isOutBorderVisible = true
+	if self.parent ~= nil then self:addOutBordersToParent() end
+end
+
+function GuiObject:showInBorders()
+	self.isInBorderVisible = true
+	addBordersRect(self.borderEngine, 1, 1, self.frame.size.width, self.frame.size.height)
+end
+
+function GuiObject:hideInBorders()
+	self.isInBorderVisible = false
+	self:updateInBorders()
 end
 
 -- Event handling
@@ -67,8 +146,8 @@ function GuiObject:eventForChild(event, child)
 			return nil 
 		end
 
-		local x = event.x - child.frame.x
-		local y = event.y - child.frame.y
+		local x = event.x - child.frame.origin.x + 1
+		local y = event.y - child.frame.origin.y + 1
 		return TapEvent:new(x, y, event.button)
 	else
 		return event

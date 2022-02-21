@@ -5,6 +5,7 @@ GuiEventType = {
 
 GuiEvent = {}
 GuiEvent.__index = GuiEvent
+GuiEvent.typeLabel = "GuiEvent"
 
 function GuiEvent:new(type, handlingFunc)
 	if type == nil then

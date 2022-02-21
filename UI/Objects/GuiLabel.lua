@@ -3,6 +3,7 @@ require 'ui/utils/line_breaking'
 
 GuiLabel = GuiObject:new()
 GuiLabel.__index = GuiLabel
+GuiLabel.typeLabel = "GuiLabel"
 GuiLabel.defaultTextColor = 0xFFFFFF
 
 function GuiLabel:new(frame, background, text)
@@ -20,9 +21,9 @@ end
 function GuiLabel:drawBy(drawer)
 	getmetatable(getmetatable(self)).drawBy(self, drawer)
 
-	local lines = LineBreaker(self.breakMode, self.text, self.frame.width, self.frame.height)
+	local lines = LineBreaker(self.breakMode, self.text, self.frame.size.width, self.frame.size.height)
 	for index, line in ipairs(lines) do
-		local y = self.frame.y + index - 1
-		drawer:drawText(self.frame.x, y, line, self.background, self.textColor)
+		local y = self.frame.origin.y + index - 1
+		drawer:drawText(self.frame.origin.x, y, line, self.background, self.textColor)
 	end
 end
