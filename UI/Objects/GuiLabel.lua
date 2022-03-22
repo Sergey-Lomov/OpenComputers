@@ -17,13 +17,13 @@ function GuiLabel:new(frame, background, text)
   return label
 end
  
-function GuiLabel:drawBy(drawer)
-  getmetatable(getmetatable(self)).drawBy(self, drawer)
+function GuiLabel:drawSelf(drawer)
+  getmetatable(getmetatable(self)).drawSelf(self, drawer)
  
   local lines = LineBreaker(self.breakMode, self.text, self.frame.size.width, self.frame.size.height)
   for index, line in ipairs(lines) do
     local y = self.frame.origin.y + index - 1
-    drawer:drawText(self.frame.origin.x, y, line, self.background, self.textColor)
+    drawer:drawText(self.frame.origin.x, y, line, self:inheritedBackground(), self.textColor)
   end
 end
  

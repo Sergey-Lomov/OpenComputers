@@ -17,49 +17,55 @@ function KeyboardHandler:handleKey(key)
   key.isControl = keyboard.isControl(key.char)
   self.responders[self.responderIndex]:onKey(key)
 end
- 
-function KeyboardHandler:selectNextResponder()
+
+function KeyboardHandler:setResponderIndex(index)
+  if self.responderIndex == index then return end
+
   if self.responderIndex ~= nil then
     self.responders[self.responderIndex]:firstResponderWasReleased()
   end
- 
-  if self.responderIndex == nil or responderIndex == #self.responders then
-    self.responderIndex = 1
-  else
-    self.responderIndex = self.responderIndex + 1
+
+  self.responderIndex = index
+
+  if self.responderIndex ~= nil then
+    self.responders[self.responderIndex]:firstResponderWasBecame()
   end
+end
  
-  self.responders[self.responderIndex]:firstResponderWasBecame()
+function KeyboardHandler:selectNextResponder()
+  if self.responderIndex == nil or responderIndex == #self.responders then
+    self:setResponderIndex(1)
+  else
+    self:setResponderIndex(self.responderIndex + 1)
+  end
 end
  
 function KeyboardHandler:clearResponders()
-  if self.responderIndex ~= nil then
-    self.responders[self.responderIndex]:firstResponderWasReleased()
-  end
- 
+  self:setResponderIndex(nil)
   self.responders = {}
-  self.responderIndex = nil
+end
+
+function KeyboardHandler:setFirstResponder(responder)
+  if responder == nil then 
+    self:setResponderIndex(nil)
+    return 
+  end
+
+  for index, iterResponder in ipairs(self.responders) do
+    if responder == iterResponder then
+      self:setResponderIndex(index)
+    end
+  end
 end
  
 function KeyboardHandler:setResponders(responders)
+  self:setResponderIndex(nil)
   self.responders = responders
  
   local sort = function(r1, r2)
     return (r1.responderOrder or 0) < (r2.responderOrder or 0)
   end
   table.sort(self.responders, sort)
-  
-  self.responderIndex = nil
-end
- 
-function KeyboardHandler:setFirstResponder(responder)
-  if responder == nil then self.responderIndex = nil return end
-  for index, iterResponder in ipairs(self.responders) do
-    if responder == iterResponder then
-      self.responderIndex = index
-      responder:firstResponderWasBecame()
-    end
-  end
 end
  
 function KeyboardHandler:isFirstResponder(responder)

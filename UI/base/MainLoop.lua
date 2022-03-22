@@ -4,7 +4,7 @@ local event = require 'event'
 local MainLoop = {
   drawer = nil,
   screens = {},
-  redrawFrequency = 1,
+  redrawFrequency = 0.05,
   redrawTime = nil,
   eventsManager = nil
 }
@@ -47,7 +47,7 @@ function MainLoop:pushScreen(screen)
   if oldTop ~= nil then oldTop:becameInactive() end
   
   table.insert(self.screens, screen)
-  self:topScreen():becameActive()
+  screen:becameActive()
  
   redraw()
 end

@@ -2,12 +2,14 @@ require 'extended_table'
 require 'ui/utils/asserts'
 require 'ui/geometry/rect'
 require 'ui/base/border_engine'
+require 'ui/base/main_loop'
 require 'ui/events/keyboard_handler'
 require 'ui/events/gui_event'
 
 GuiObject = {}
 GuiObject.__index = GuiObject
 GuiObject.typeLabel = "GuiObject"
+GuiObject.defaultBackground = 0x000000
 
 -- Public
 
@@ -22,35 +24,12 @@ function GuiObject:new(frame, background)
   object.isOutBorderVisible = false
   object.isInBorderVisible = false
   object.needToRender = true
+  object.isHidden = false
 
   object.inheritBorderStyle = true
   object.borderEngine = BorderEngine:new(BorderStyle.default)
 
   return object
-end
-
-function GuiObject:drawBy(drawer)
-  if not self.needToRender then return end
-  self.needToRender = false
-
-  if self.background ~= nil then
-    drawer:drawBackRect(self.frame, self.background)
-  end
-
-  drawer:increaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
-  self.borderEngine:drawBy(drawer, self.background)
-  
-  for _, child in ipairs(self.childs) do
-    if child.needToRender then
-      child:drawBy(drawer)
-    end
-  end
-  drawer:decreaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
-end
-
-function GuiObject:setNeedRender()
-  self.needToRender = true
-  if self.parent ~= nil then self.parent:setNeedRender() end
 end
 
 function GuiObject:setFrame(rect)
@@ -62,6 +41,59 @@ end
 function GuiObject:handleFrameUpdate()
   self:updateInBorders()
   self:updateOutBorders()
+end
+
+-------- Drawing
+
+function GuiObject:drawBy(drawer, forced)
+  if self.isHidden then return end
+  if forced == nil then forced = false end
+
+  self:willDraw(drawer) 
+
+  if self.needToRender or forced then 
+    self:drawSelf(drawer)
+  end
+
+  self:drawChilds(drawer, self.needToRender, self.needToRender)
+  self.needToRender = false
+end
+
+function GuiObject:willDraw(drawer)
+  -- May be overrided by derived classes
+end
+
+function GuiObject:drawSelf(drawer)
+  local background = self:inheritedBackground()
+  drawer:drawBackRect(self.frame, background)
+end
+
+function GuiObject:drawChilds(drawer, forced, drawBorders)
+  drawer:increaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
+  if drawBorders then
+    self.borderEngine:drawBy(drawer, self.background)
+  end
+  
+  for _, child in ipairs(self.childs) do
+    child:drawBy(drawer, forced)
+  end
+  drawer:decreaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
+end
+
+function GuiObject:setNeedRender(withParent)
+  if withParent == nil then withParent = true end
+  self.needToRender = true
+  if self.parent ~= nil and withParent then self.parent:setNeedRender(false) end
+end
+
+function GuiObject:inheritedBackground()
+  if self.background ~= nil then
+    return self.background
+  elseif self.parent == nil then 
+    return GuiObject.defaultBackground
+  else 
+    return self.parent:inheritedBackground()
+  end
 end
 
 -------- Keyboard first responder

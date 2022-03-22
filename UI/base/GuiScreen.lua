@@ -20,8 +20,8 @@ function GuiScreen:new(frame, background)
   return screen
 end
  
-function GuiScreen:drawBy(drawer)
-  getmetatable(getmetatable(self)).drawBy(self, drawer)
+function GuiScreen:drawSelf(drawer)
+  getmetatable(getmetatable(self)).drawSelf(self, drawer)
   -- Temporal
   drawer.gpu.setBackground(0)
 end
