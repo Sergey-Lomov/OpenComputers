@@ -1,3 +1,4 @@
+require 'utils'
 require 'ui/base/gui_object'
 require 'ui/events/keyboard_handler'
 require 'ui/objects/cursor'
@@ -54,14 +55,15 @@ function GuiTextField:drawSelf(drawer)
   end
 end
 
-function GuiObject:firstResponderWasBecame()
+function GuiTextField:firstResponderWasBecame()
   self.cursor.isHidden = false
   self:setCursorPosition(unicode.len(self.text) + 1)
+  self:setNeedRender(false)
 end
  
 function GuiTextField:firstResponderWasReleased()
   self.cursor.isHidden = true
-  if self.onFinishEditing ~= nil then self.onFinishEditing(self) end
+  safeCall(self.onFinishEditing, self)
   self:setNeedRender(false)
 end
  

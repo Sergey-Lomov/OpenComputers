@@ -7,11 +7,9 @@ KeyboardHandler = {
 }
  
 function KeyboardHandler:handleKey(key)
-  if self.responderIndex == nil then
-    if #self.responders > 0 and key.code == keyboard.keys.tab then
-      self:selectNextResponder()
-      return
-    end
+  if key.isDown and #self.responders > 0 and key.code == keyboard.keys.tab then
+    self:selectNextResponder()
+    return
   end
  
   key.isControl = keyboard.isControl(key.char)
@@ -33,8 +31,15 @@ function KeyboardHandler:setResponderIndex(index)
 end
  
 function KeyboardHandler:selectNextResponder()
-  if self.responderIndex == nil or responderIndex == #self.responders then
+  if #self.responders == 0 then
+    self:setResponderIndex(nil)
+    return
+  end
+
+  if self.responderIndex == nil then
     self:setResponderIndex(1)
+  elseif self.responderIndex == #self.responders then
+    self:setResponderIndex(nil)
   else
     self:setResponderIndex(self.responderIndex + 1)
   end

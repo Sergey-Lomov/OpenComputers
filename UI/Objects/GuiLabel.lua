@@ -1,5 +1,7 @@
 require 'ui/base/gui_object'
 require 'ui/utils/line_breaking'
+require 'ui/utils/content_alignment'
+local unicode = require 'unicode'
  
 GuiLabel = GuiObject:new()
 GuiLabel.__index = GuiLabel
@@ -12,6 +14,7 @@ function GuiLabel:new(frame, background, text)
  
   label.text = text or ""
   label.textColor = GuiLabel.defaultTextColor
+  label.textAlignment = ContentAlignment.centerLeft
   label.breakMode = LineBreakMode.none
  
   return label
@@ -21,9 +24,12 @@ function GuiLabel:drawSelf(drawer)
   getmetatable(getmetatable(self)).drawSelf(self, drawer)
  
   local lines = LineBreaker(self.breakMode, self.text, self.frame.size.width, self.frame.size.height)
+  local topY = ContentAlignmenter:y(self.textAlignment, #lines, self.frame.size.height)
+
   for index, line in ipairs(lines) do
-    local y = self.frame.origin.y + index - 1
-    drawer:drawText(self.frame.origin.x, y, line, self:inheritedBackground(), self.textColor)
+    local y = index - 1 + topY
+    local x = ContentAlignmenter:y(self.textAlignment, unicode.len(line), self.frame.size.width)
+    drawer:drawText(x, y, line, self:inheritedBackground(), self.textColor)
   end
 end
  

@@ -22,6 +22,12 @@ end
 function Rect:newRaw(x, y, width, height)
   return self:new(Point:new(x, y), Size:new(width, height))
 end
+
+function Rect:newBounds(frame)
+  typeAssert(frame, Rect, 1)
+ 
+  return self:newRaw(1, 1, frame.size.width, frame.size.height)
+end
  
 Rect.zero = Rect:newRaw(0, 0, 0, 0)
  

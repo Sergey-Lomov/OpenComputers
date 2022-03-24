@@ -49,13 +49,14 @@ function GuiObject:drawBy(drawer, forced)
   if self.isHidden then return end
   if forced == nil then forced = false end
 
-  self:willDraw(drawer) 
+  self:willDraw(drawer)
+  local needToRender = self.needToRender or forced
 
-  if self.needToRender or forced then 
+  if needToRender then 
     self:drawSelf(drawer)
   end
 
-  self:drawChilds(drawer, self.needToRender, self.needToRender)
+  self:drawChilds(drawer, needToRender, needToRender)
   self.needToRender = false
 end
 
@@ -70,13 +71,15 @@ end
 
 function GuiObject:drawChilds(drawer, forced, drawBorders)
   drawer:increaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
-  if drawBorders then
-    self.borderEngine:drawBy(drawer, self.background)
-  end
   
   for _, child in ipairs(self.childs) do
     child:drawBy(drawer, forced)
   end
+
+  if drawBorders then
+    self.borderEngine:drawBy(drawer, self.background)
+  end
+
   drawer:decreaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
 end
 

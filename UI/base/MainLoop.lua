@@ -1,7 +1,4 @@
-require 'ui/base/drawer'
-local event = require 'event'
- 
-local MainLoop = {
+ local MainLoop = {
   drawer = nil,
   screens = {},
   redrawFrequency = 0.05,
@@ -9,6 +6,10 @@ local MainLoop = {
   eventsManager = nil
 }
 package.loaded[...] = MainLoop
+
+require 'ui/base/drawer'
+require 'ui/events/events_manager'
+local event = require 'event'
  
 function MainLoop:topScreen()
   if #self.screens == 0 then 

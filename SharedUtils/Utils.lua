@@ -136,4 +136,8 @@ end
 
 mt = function() utils:memoryTest() end
 
+function safeCall(func, ...)
+    if func ~= nil then return func(...) end
+end
+
 return utils
