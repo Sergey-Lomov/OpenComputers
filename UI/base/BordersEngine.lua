@@ -89,10 +89,10 @@ end
 function BorderEngine:addPoint(coords, env, checkLines)
   for _, point in ipairs(self.points) do
     if point.coords.x == coords.x and point.coords.y == coords.y then
-      point.env.top = point.env.top or environment.top
-      point.env.bottom = point.env.bottom or environment.bottom
-      point.env.left = point.env.left or environment.left
-      point.env.right = point.env.right or environment.right
+      point.env.top = point.env.top or env.top
+      point.env.bottom = point.env.bottom or env.bottom
+      point.env.left = point.env.left or env.left
+      point.env.right = point.env.right or env.right
       return
     elseif point.coords.x == coords.x then
       if point.coords.y == coords.y - 1 then

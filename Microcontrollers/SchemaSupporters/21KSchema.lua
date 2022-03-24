@@ -7,8 +7,8 @@ schemaSide = 0 -- Inventory which schema should be supported
 frequency = 2.5
 
 sp = 4361			-- Status port
-pid = "nep1_id"		-- Ping id
-pt = "Нептуний 1"	-- Ping title
+pid = "21knuclear1_id"		-- Ping id
+pt = "21К реактор 1"	-- Ping title
 wc = 1				-- Warning code
 prc = 2 			-- Problem code
 pic = 3				-- Ping code
@@ -18,7 +18,7 @@ ass = {}			-- Active statuses
 -- In this table may be specified slots, which should contains elements in item provider inventory. 
 -- If slot for element not specified and 'upso' setted to false, element will be searched in all slots.
 providersSlots = {
-	["IC2:reactorMOXQuad:1"] = 9,
+	["IC2:reactorMOXQuad"] = 9,
 }
 upso = true  -- Search items only in slots specified in 'providersSlots'
 

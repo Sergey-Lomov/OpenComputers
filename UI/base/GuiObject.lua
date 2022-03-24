@@ -1,4 +1,5 @@
 require 'extended_table'
+require 'utils'
 require 'ui/utils/asserts'
 require 'ui/geometry/rect'
 require 'ui/base/border_engine'
@@ -29,13 +30,19 @@ function GuiObject:new(frame, background)
   object.inheritBorderStyle = true
   object.borderEngine = BorderEngine:new(BorderStyle.default)
 
+  object.onFrameUpdate = nil -- Function which calls at frame update. Take one argument - object.
+
   return object
 end
 
 function GuiObject:setFrame(rect)
   typeAssert(rect, Rect, 1)
+
   self.frame = rect
   self:handleFrameUpdate()
+  safeCall(self.onFrameUpdate, self)
+
+  self:setNeedRender(true)
 end
 
 function GuiObject:handleFrameUpdate()
@@ -56,11 +63,22 @@ function GuiObject:drawBy(drawer, forced)
     self:drawSelf(drawer)
   end
 
-  self:drawChilds(drawer, needToRender, needToRender)
+  drawer:increaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
+  self:drawChilds(drawer, needToRender)
+  if needToRender then
+    self.borderEngine:drawBy(drawer, self.background)
+    self:drawOverborder(drawer)
+  end
+  drawer:decreaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
+
   self.needToRender = false
 end
 
 function GuiObject:willDraw(drawer)
+  -- May be overrided by derived classes
+end
+
+function GuiObject:drawOverborder(drawer)
   -- May be overrided by derived classes
 end
 
@@ -69,18 +87,10 @@ function GuiObject:drawSelf(drawer)
   drawer:drawBackRect(self.frame, background)
 end
 
-function GuiObject:drawChilds(drawer, forced, drawBorders)
-  drawer:increaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
-  
+function GuiObject:drawChilds(drawer, forced)
   for _, child in ipairs(self.childs) do
     child:drawBy(drawer, forced)
   end
-
-  if drawBorders then
-    self.borderEngine:drawBy(drawer, self.background)
-  end
-
-  drawer:decreaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
 end
 
 function GuiObject:setNeedRender(withParent)

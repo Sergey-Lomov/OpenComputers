@@ -1,12 +1,12 @@
 require 'ui/geometry/point'
 
-local VerticalAlignment = {
+VerticalAlignment = {
 	top = 1,
 	center = 2,
 	bottom = 3
 }
 
-local HorizontalAlignment = {
+HorizontalAlignment = {
 	left = 1,
 	center = 2,
 	right = 3
