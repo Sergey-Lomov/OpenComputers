@@ -28,7 +28,7 @@ function GuiLabel:drawSelf(drawer)
 
   for index, line in ipairs(lines) do
     local y = index - 1 + topY
-    local x = ContentAlignmenter:y(self.textAlignment, unicode.len(line), self.frame.size.width)
+    local x = ContentAlignmenter:x(self.textAlignment, unicode.len(line), self.frame.size.width)
     drawer:drawText(x, y, line, self:inheritedBackground(), self.textColor)
   end
 end

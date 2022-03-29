@@ -49,9 +49,9 @@ function GuiTextField:drawSelf(drawer)
   local origin = self.frame.origin
   local background = self:inheritedBackground() 
   if self.text == "" and not KeyboardHandler:isFirstResponder(self) then 
-    drawer:drawText(origin.x, origin.y, self.placeholder, background, self.placeholderColor)
+    drawer:drawText(1, 1, self.placeholder, background, self.placeholderColor)
   else 
-    drawer:drawText(origin.x, origin.y, self.text or "", background, self.textColor)
+    drawer:drawText(1, 1, self.text or "", background, self.textColor)
   end
 end
 

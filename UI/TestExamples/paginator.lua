@@ -1,8 +1,10 @@
 require 'utils'
 require 'ui/base/gui_screen'
+require 'ui/objects/gui_paginator'
 require 'ui/objects/gui_text_field'
 require 'ui/objects/gui_button'
 require 'ui/objects/gui_panel'
+require 'ui/objects/gui_label'
 require 'ui/geometry/rect'
  
 ml = require 'ui/base/main_loop'
@@ -18,11 +20,10 @@ p1.onFrameUpdate = function(p)
 	tf1:setFrame(Rect:newRaw(2, 2, p.frame.size.width - 2, 1))
 	b1:setFrame(Rect:newRaw(2, 4, p1.frame.size.width - 2, 5))
 end
-s:addChild(p1)
 
 tf1 = GuiTextField:new(Rect:newRaw(2, 2, p1.frame.size.width - 2, 1))
 tf1:showOutBorders()
-tf1.placeholder.text = "Search..."
+tf1.placeholder = "Search..."
 p1:addChild(tf1)
 
 b1 = GuiButton:new(Rect:newRaw(2, 4, p1.frame.size.width - 2, 5), nil, "Push me top grow up!")
@@ -32,6 +33,13 @@ b1.action = function()
 end
 p1:addChild(b1)
 p1:showInBorders()
+
+p2 = GuiLabel:new(nil, nil, "Page 2")
+p3 = GuiLabel:new(nil, nil, "Page 3")
+
+local prRect = fullRect:withGap(1)
+pr = GuiPaginator:new(prRect, nil, {p1, p2, p3})
+s:addChild(pr)
 
 ml:pushScreen(s)
 ml:start()

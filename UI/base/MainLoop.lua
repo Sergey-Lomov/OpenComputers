@@ -24,6 +24,9 @@ local function redraw()
   if screen ~= nil and MainLoop.drawer ~= nil then
     screen:drawBy(MainLoop.drawer)
   end
+
+  -- Temporal
+  drawer.gpu.setBackground(0)
 end
  
 function MainLoop:start(gpu)

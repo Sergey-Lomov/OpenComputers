@@ -41,7 +41,7 @@ end
 function GuiButton:handleFrameUpdate()
   getmetatable(getmetatable(self)).handleFrameUpdate(self)
   local labelFrame = Rect:newBounds(self.frame)
-  button.label:setFrame(labelFrame)
+  self.label:setFrame(labelFrame)
 end
 
 function GuiButton:onTap(tap)
@@ -57,11 +57,11 @@ function GuiButton:onKey(key)
   end
 end
 
-function GuiObject:firstResponderWasBecame()
+function GuiButton:firstResponderWasBecame()
   self:setNeedRender(false)
 end
 
-function GuiObject:firstResponderWasReleased()
+function GuiButton:firstResponderWasReleased()
   self:setNeedRender(false)
 end
 

@@ -1,4 +1,5 @@
 -- This manager control focus switching and key event routing
+require 'extended_table'
 local keyboard = require 'keyboard'
  
 KeyboardHandler = {
@@ -61,6 +62,14 @@ function KeyboardHandler:setFirstResponder(responder)
       self:setResponderIndex(index)
     end
   end
+end
+
+function KeyboardHandler:registerResponder(responder)
+  table.insert(self.responders, responder)
+end
+
+function KeyboardHandler:unregisterResponder(responder)
+  table.removeByValue(self.responders, responder)
 end
  
 function KeyboardHandler:setResponders(responders)

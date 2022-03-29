@@ -19,17 +19,9 @@ function GuiScreen:new(frame, background)
  
   return screen
 end
- 
-function GuiScreen:drawSelf(drawer)
-  getmetatable(getmetatable(self)).drawSelf(self, drawer)
-  -- Temporal
-  drawer.gpu.setBackground(0)
-end
- 
+
 function GuiScreen:becameActive()
-  local responders = {}
-  self:collectResponders(responders)
-  KeyboardHandler:setResponders(responders)
+  self:registerResponders()
 end
  
 function GuiScreen:becameInactive()

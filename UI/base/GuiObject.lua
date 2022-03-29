@@ -59,16 +59,18 @@ function GuiObject:drawBy(drawer, forced)
   self:willDraw(drawer)
   local needToRender = self.needToRender or forced
 
+  drawer:increaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
+  
   if needToRender then 
     self:drawSelf(drawer)
   end
 
-  drawer:increaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
   self:drawChilds(drawer, needToRender)
   if needToRender then
     self.borderEngine:drawBy(drawer, self.background)
     self:drawOverborder(drawer)
   end
+  
   drawer:decreaseOffset(self.frame.origin.x - 1, self.frame.origin.y - 1)
 
   self.needToRender = false
@@ -84,7 +86,8 @@ end
 
 function GuiObject:drawSelf(drawer)
   local background = self:inheritedBackground()
-  drawer:drawBackRect(self.frame, background)
+  local bounds = Rect:newBounds(self.frame)
+  drawer:drawBackRect(bounds, background)
 end
 
 function GuiObject:drawChilds(drawer, forced)
@@ -111,16 +114,6 @@ end
 
 -------- Keyboard first responder
 
-function GuiObject:collectResponders(collection)
-  if self[KeyEvent.handlingFunc] ~= nil then
-    table.insert(collection, self)
-  end
-
-  for _, child in ipairs(self.childs) do
-    child:collectResponders(collection)
-  end
-end
-
 function GuiObject:becameFirstResponder()
   KeyboardHandler:setFirstResponder(self)
 end
@@ -133,11 +126,33 @@ function GuiObject:firstResponderWasReleased()
   -- Declared for subclass
 end
 
+function GuiObject:registerResponders()
+  if self[KeyEvent.handlingFunc] ~= nil then
+    KeyboardHandler:registerResponder(self)
+  end
+  
+  for _, child in ipairs(self.childs) do
+    child:registerResponders()
+  end
+end
+
+function GuiObject:unregisterResponders()
+  if self[KeyEvent.handlingFunc] ~= nil then
+    KeyboardHandler:unregisterResponder(self)
+  end
+  
+  for _, child in ipairs(self.childs) do
+    child:unregisterResponders()
+  end
+end
+
 ------- Hierarchy
 
 function GuiObject:addChild(child)
   table.insert(self.childs, child)
   child.parent = self
+  child:registerResponders()
+
   if child.inheritBorderStyle then
     child.borderEngine.style = self.borderEngine.style
   end
@@ -147,8 +162,10 @@ function GuiObject:addChild(child)
 end
 
 function GuiObject:removeFromParent()
+  if self.parent == nil then return end
   table.removeByValue(self.parent.childs, self)
-  self.parent = self
+  self:unregisterResponders()
+  self.parent = nil
 end
 
 function GuiObject:absoluteFrame()

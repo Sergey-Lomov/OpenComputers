@@ -28,6 +28,12 @@ function Rect:newBounds(frame)
  
   return self:newRaw(1, 1, frame.size.width, frame.size.height)
 end
+
+function Rect:withGap(gap)
+  typeAssert(gap, "number", 1)
+ 
+  return Rect:newRaw(1 + gap, 1 + gap, self.size.width - 2 * gap, self.size.height - 2 * gap)
+end
  
 Rect.zero = Rect:newRaw(0, 0, 0, 0)
  

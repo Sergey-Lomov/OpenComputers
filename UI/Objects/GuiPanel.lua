@@ -41,5 +41,5 @@ function GuiPanel:drawOverborder(drawer)
 end
  
 function GuiPanel:__tostring()
-  return "<Panel title: \"" .. self.title .. "\" frame: " .. tostring(self.frame) .. ">"
+  return "<Panel title: \"" .. (self.title or "nil") .. "\" frame: " .. tostring(self.frame) .. ">"
 end
