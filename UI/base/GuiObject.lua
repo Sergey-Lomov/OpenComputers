@@ -274,3 +274,19 @@ function GuiObject:handleEvent(event)
     event.handled = true
   end
 end
+
+------------------- Development
+
+function GuiObject:printChilds(levelsLeft, prefix)
+  if levelsLeft == 0 then return end
+  prefix = prefix or ""
+  levelsLeft = levelsLeft or math.huge
+
+  for index, child in ipairs(self.childs) do
+    local childPrefixTale = (index == #self.childs) and "└" or "├"
+    local subchildsPrefixTale = (index == #self.childs) and " " or "│"
+    local childPrefix = prefix .. childPrefixTale
+    print(childPrefix .. tostring(child))
+    child:printChilds(levelsLeft - 1, prefix .. subchildsPrefixTale)
+  end
+end

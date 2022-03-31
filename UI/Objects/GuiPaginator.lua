@@ -4,7 +4,6 @@ require 'ui/objects/gui_label'
 require 'ui/objects/gui_button'
 require 'ui/objects/gui_panel'
 require 'ui/geometry/rect'
-local unicode = require 'unicode'
  
 GuiPaginator = GuiObject:new()
 GuiPaginator.__index = GuiPaginator

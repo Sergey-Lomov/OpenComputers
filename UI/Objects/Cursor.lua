@@ -43,8 +43,8 @@ function Cursor:drawSelf(drawer)
   local origin = self.frame.origin
   local background = self:inheritedBackground()
   if self.isInverted then
-    drawer:drawText(origin.x, origin.y, self.underchar, self.color, background)
+    drawer:drawText(1, 1, self.underchar, self.color, background)
   else
-  	drawer:drawText(origin.x, origin.y, self.underchar, background, self.color)
+  	drawer:drawText(1, 1, self.underchar, background, self.color)
   end
 end
